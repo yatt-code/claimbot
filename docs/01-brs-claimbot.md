@@ -1,0 +1,195 @@
+# Business Requirement Specification (BRS)
+
+## Project Overview
+
+**Project Title:** Internal Claims & Overtime Management System  
+**Date:** May 2025  
+**Requested By:** Aiyad  
+
+---
+
+## 1. Project Objective
+
+This project aims to develop an internal system that **digitizes and streamlines** the current manual process of submitting, approving, and tracking employee expense claims and overtime requests. Currently handled via Excel spreadsheets, the new system will:
+
+- Improve accuracy and transparency
+- Enhance auditability
+- Reduce administrative workload
+- Provide real-time tracking and reporting
+
+---
+
+## 2. Project Scope
+
+### In Scope
+- ✅ **Expense and overtime submission** workflows
+- ✅ **Multi-level approval** processes (Admin/Manager)
+- ✅ **Configurable rate management** (mileage rates & overtime multipliers)
+- ✅ **Document attachment** support for receipts and supporting materials
+- ✅ **Export functionality** for monthly summaries (Excel/CSV format)
+- ✅ **User and role management** system
+- ✅ **Comprehensive audit logging** for all system actions
+
+### Out of Scope (MVP)
+- ❌ Integration with external payroll systems
+- ❌ Public holiday calendar API integration
+- ❌ Native mobile application (web-responsive design only)
+
+---
+
+## 3. Stakeholder Roles
+
+| Role | Primary Responsibilities |
+|------|-------------------------|
+| **Staff** | Submit expense claims and overtime requests |
+| **Managers** | Review and approve/reject submissions from team members |
+| **Finance/HR** | Monitor claims, manage rate configurations, generate reports |
+| **System Admin** | Oversee system operations, manage users and roles |
+
+---
+
+## 4. Business Rules and Logic
+
+### 4.1 Expense Claims
+
+**Rate Structure:**
+- Default mileage rate: **RM 0.50/km** (admin configurable)
+
+**Documentation Requirements:**
+- Receipts **mandatory** for: toll payments, petrol, meals, and miscellaneous expenses
+- Each claim must be associated with a specific project or department
+
+**Submission Rules:**
+- Claims must be submitted within **7 days** of expense occurrence
+- Claims are editable until submission
+- Claims become **locked** after approval
+
+### 4.2 Overtime Calculations
+
+**Rate Calculation:**
+- Based on user's hourly rate (derived from annual salary)
+- Multipliers vary by day type and user designation:
+
+| Day Type | Multiplier |
+|----------|------------|
+| **Weekdays** | 1.0x (standard rate) |
+| **Weekends** | 1.5x |
+| **Public Holidays** | 2.0x – 3.0x (admin configurable) |
+
+**Submission Requirements:**
+- Must include business justification
+- Requires defined approval workflow
+
+### 4.3 Salary Management
+
+- Stored per user for overtime rate calculations
+- **Admin-only access** (hidden from regular users)
+- Used exclusively for automated overtime calculations
+
+### 4.4 Role-Based Permissions
+
+| Role | System Permissions |
+|------|-------------------|
+| **Staff** | • Submit, view, and edit own claims/overtime<br>• View submission status and history |
+| **Manager** | • All Staff permissions<br>• Approve/reject direct reports' submissions |
+| **Finance** | • Export system data<br>• Monitor financial totals<br>• Update payout statuses |
+| **Admin** | • Full system access<br>• User management (CRUD operations)<br>• Rate and designation configuration |
+
+### 4.5 Document Management
+
+**File Handling:**
+- Secure file uploads with metadata storage (filename, path, file type)
+- Multiple attachments supported per claim/overtime request
+- Direct linking between attachments and parent submissions
+
+### 4.6 Approval Workflow
+
+**Process Flow:**
+```
+Staff Submission → Manager Review → [Optional] Finance Review → Final Approval
+```
+
+**Audit Requirements:**
+- Each approval stage logs: timestamp, reviewer comments, approver identification
+- Complete workflow visibility for all stakeholders
+
+### 4.7 System Audit Trail
+
+**Logging Scope:**
+- All create, edit, approve, and reject operations
+- Comprehensive audit records including:
+    - User identification
+    - Timestamp
+    - Specific changes made
+    - System state before/after changes
+
+---
+
+## 5. Functional Requirements Summary
+
+| Feature Category | Specific Functionality |
+|-----------------|----------------------|
+| **Submission Management** | Intuitive forms for expense claims and overtime logging |
+| **Status Tracking** | Real-time visibility of submission status and history |
+| **Administrative Controls** | Interface for configuring mileage rates and overtime rules |
+| **Approval Dashboard** | Centralized review and action interface for managers/finance |
+| **Document Support** | Secure upload and viewing of receipts and justification documents |
+| **Reporting & Export** | Filterable monthly reports with multiple export formats |
+| **System Monitoring** | Comprehensive audit logging and system activity tracking |
+
+---
+
+## 6. Non-Functional Requirements
+
+### Security & Access
+- **Role-Based Access Control (RBAC)** implementation
+- Secure user authentication and authorization
+
+### Performance & Usability
+- **Responsive design** optimized for desktop and mobile devices
+- **Scalability** to support up to 100 concurrent users
+- Intuitive user interface with minimal learning curve
+
+### Compliance & Monitoring
+- **Complete auditability** with timestamped action logs
+- **Secure file storage** with clear data lineage
+- Compliance with internal data governance policies
+
+---
+
+## 7. Project Timeline & Milestones
+
+| Phase | Deliverable | Duration | Timeline |
+|-------|-------------|----------|----------|
+| **Phase 1** | BRS Approval & Sign-off | 1 week | Week 1 |
+| **Phase 2** | System Design Specification (SDS) | 1 week | Week 2 |
+| **Phase 3** | Database Schema & Backend Development | 2 weeks | Week 3-4 |
+| **Phase 4** | Frontend Development & System Testing | 2 weeks | Week 5-6 |
+| **Phase 5** | Deployment & Administrator Training | 1 week | Week 7 |
+| **Phase 6** | Go-Live Support & Monitoring | 1 week | Week 8 |
+
+---
+
+## 8. Acceptance Criteria
+
+### Core Functionality
+- ✅ End-to-end submission workflow operates smoothly for both claims and overtime
+- ✅ Manager approval process functions with comment capabilities
+- ✅ Accurate calculations for mileage and overtime based on configured rates
+
+### Document & Audit Management
+- ✅ Attachment viewing accessible to all relevant approvers
+- ✅ Comprehensive audit logs capture all critical system actions
+- ✅ Administrative rate configuration interface functions correctly
+
+### Reporting & Export
+- ✅ Monthly reports generate and export accurately in required formats
+- ✅ Data filtering and search capabilities work as specified
+
+### User Experience
+- ✅ Intuitive interface requires minimal user training
+- ✅ System performance meets specified response time requirements
+
+---
+
+_Document Version: 1.0 • Last updated: 2025-05-27 by Aiyad_
