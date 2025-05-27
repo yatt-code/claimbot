@@ -22,7 +22,7 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 
 ### Backend
 - Node.js + Express RESTful API
-- Auth: JWT-based session management
+- Auth: Handle by Clerk
 - API Rate Limiting: Express middleware (e.g., `express-rate-limit`) to throttle requests and prevent abuse.
 - API documentation will be generated using **Swagger** (OpenAPI 3.0 compliant) for endpoint visibility and testing.
 
@@ -39,6 +39,7 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 ```javascript
 {
   _id: ObjectId,
+  clerkId: "user_xyz123", // Clerk's internal ID
   name: "Aiyad Zamir",
   email: "aiyad@objectexpression.com",
   department: "Management",
@@ -51,6 +52,8 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
   updatedAt: ISODate
 }
 ```
+
+> 🔐 *Note:* The `users` collection is extended from Clerk identities using the `clerkId` field as the foreign key. This ensures user records are easily mapped and queried using Clerk's user identity.
 
 ### 3.2 Claims Collection
 
@@ -164,13 +167,13 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 ## 4. API Endpoints Summary
 
 ### Authentication
-- `POST /auth/login`
-- `POST /auth/register`
-- `GET /auth/profile`
+- Login handled by Clerk `signIn()` // POST /auth/login
+- Register handled by Clerk `signUp` // POST /auth/register
+- `GET /auth/profile` // Fetches from Clerk
 
 ### Users
 - `GET /users`
-- `POST /users`
+- Clerk should now handle user creation // POST /users
 - `PATCH /users/:id`
 - `DELETE /users/:id`
 
