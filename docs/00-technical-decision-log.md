@@ -90,6 +90,25 @@ Add a new TDL whenever you:
 - **Decision**: Implemented basic audit logging by creating an `AuditLog` Mongoose model and adding logging calls in relevant API routes (create, update, delete, submit, approve/reject for claims/overtime, file upload).
 - **Consequences**: Provides a foundational audit trail; more detailed logging or a dedicated logging service might be needed for comprehensive production monitoring.
 
+### [2025-05-29] Implement API Endpoints for Claims and Overtime
+- **Status**: Accepted
+- **Context**: Required API routes to allow staff to submit claims/overtime and managers to approve them.
+- **Decision**: Created RESTful routes under `/api/claims` and `/api/overtime` including actions for `submit` and `approve`. Each action performs validation via Zod and logs to `AuditLog`.
+- **Consequences**: Backend logic is now testable and modular. Additional roles and edge-case handling may be added later.
+
+### [2025-05-29] Integrate File Upload and Retrieval System
+- **Status**: Accepted
+- **Context**: Claims and overtime submissions may include proof documents (receipts, screenshots, etc.).
+- **Decision**: Built upload and download endpoints using Next.js API routes and Mongoose `File` model. Files are stored with metadata including MIME type and linked document ID.
+- **Consequences**: System now supports file attachments for claims/overtime. Future consideration for cloud/offloaded storage.
+
+### [2025-05-29] Add Integration Test Scaffolding for API Routes
+- **Status**: Accepted
+- **Context**: Need test coverage for claim and overtime logic as the system scales.
+- **Decision**: Used Jest + Supertest to set up API test files and test flows like claim submission and approval.
+- **Consequences**: Backend is testable and QA-ready. Requires CI integration in future phases.
+
 ---
 
+## Development Phase : 2
 

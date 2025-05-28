@@ -45,7 +45,7 @@ This plan refines the timeline from the BRS and SDS, detailing key activities fo
 
 *   **Objective**: Develop the core frontend structure and all staff-facing functionalities.
 *   **Key Activities**:
-    *   **Frontend Setup**: Initialize React.js (with TypeScript) project, configure TailwindCSS and ShadCN UI.
+    *   **Frontend Setup**: Next.js 15 project, configure TailwindCSS and ShadCN UI.
     *   **Global Components**: Develop `Button` and `StatusBadge` components.
     *   **Authentication UI**: Login, Registration, Profile pages.
     *   **Staff Dashboard**: Implement `RecentSubmissionsTable` and quick action buttons.
