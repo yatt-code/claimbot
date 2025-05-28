@@ -1,0 +1,143 @@
+import { auth } from "@clerk/nextjs/server";
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/mongodb";
+import Claim from "@/models/Claim";
+import User from "@/models/User"; // Assuming User model is needed for role check
+import AuditLog from "@/models/AuditLog"; // Import AuditLog model
+import { z } from 'zod'; // Import Zod
+
+// Define Zod schema for creating a claim
+const createClaimSchema = z.object({
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), {
+    message: "Invalid date format",
+  }),
+  project: z.string().optional(),
+  description: z.string().optional(),
+  expenses: z.object({
+    mileage: z.number().optional(),
+    toll: z.number().optional(),
+    petrol: z.number().optional(),
+    meal: z.number().optional(),
+    others: z.number().optional(),
+  }).optional(),
+  // attachments will be handled separately via file upload endpoint
+  // status will default to 'draft' on creation
+  // userId will be derived from authenticated user
+});
+
+export async function GET(request: Request) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  await dbConnect();
+
+  try {
+    // Fetch the authenticated user to determine their role and associated MongoDB user ID
+    const authenticatedUser = await User.findOne({ clerkId: userId });
+
+    if (!authenticatedUser) {
+      return new NextResponse("User not found in database", { status: 404 });
+    }
+
+    let claims;
+    // Staff can only see their own claims
+    if (authenticatedUser.role === 'staff') {
+      claims = await Claim.find({ userId: authenticatedUser._id });
+    }
+    // Admins and Finance can see all claims
+    else if (authenticatedUser.role === 'admin' || authenticatedUser.role === 'finance') {
+      claims = await Claim.find({});
+    }
+    // Managers might see direct reports' claims (more complex logic needed here)
+    else if (authenticatedUser.role === 'manager') {
+        // For now, managers see no claims until direct report logic is implemented
+        claims = []; // Or implement logic to find claims by users they manage
+    }
+    else {
+        // Other roles see no claims
+        claims = [];
+    }
+
+
+    return NextResponse.json(claims);
+
+  } catch (error) {
+    console.error("Error fetching claims:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}
+
+export async function POST(request: Request) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  await dbConnect();
+
+  try {
+    // Fetch the authenticated user to get their MongoDB user ID
+    const authenticatedUser = await User.findOne({ clerkId: userId });
+
+    if (!authenticatedUser) {
+      return new NextResponse("User not found in database", { status: 404 });
+    }
+
+    // Only Staff can create claims
+    if (authenticatedUser.role !== 'staff') {
+        return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    const body = await request.json();
+
+    // Validate request body using Zod
+    const validationResult = createClaimSchema.safeParse(body);
+
+    if (!validationResult.success) {
+      return new NextResponse("Invalid request body: " + validationResult.error.errors.map(e => e.message).join(', '), { status: 400 });
+    }
+
+    const validatedData = validationResult.data;
+
+    // Calculate totalClaim (simplified - does not include mileage calculation based on rate)
+    const totalClaim = (validatedData.expenses?.mileage || 0) +
+                       (validatedData.expenses?.toll || 0) +
+                       (validatedData.expenses?.petrol || 0) +
+                       (validatedData.expenses?.meal || 0) +
+                       (validatedData.expenses?.others || 0);
+
+
+    const newClaim = new Claim({
+      userId: authenticatedUser._id, // Link claim to the authenticated user
+      date: new Date(validatedData.date),
+      project: validatedData.project,
+      description: validatedData.description,
+      expenses: validatedData.expenses,
+      // mileageRate will be fetched from config later
+      totalClaim: totalClaim,
+      attachments: [], // Attachments linked via file upload endpoint
+      status: 'draft', // Default status
+    });
+
+    await newClaim.save();
+
+    // Basic Audit Logging
+    await AuditLog.create({
+        userId: authenticatedUser._id,
+        action: 'created_claim',
+        target: { collection: 'claims', documentId: newClaim._id },
+        details: `Created claim with ID ${newClaim._id}`,
+    });
+
+
+    return NextResponse.json(newClaim, { status: 201 });
+
+  } catch (error) {
+    console.error("Error creating claim:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}

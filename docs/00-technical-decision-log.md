@@ -1,0 +1,95 @@
+# 🧠 ClaimBot Technical Decision Log (TDL)
+
+### Format
+- **[YYYY-MM-DD] Title**
+- **Status**: Proposed | Accepted | Rejected | Deprecated
+- **Context**: What problem are we solving?
+- **Decision**: What did we choose and why?
+- **Consequences**: Tradeoffs, side effects, impact on other areas
+
+### When to log new technical decision entries?
+
+Add a new TDL whenever you:
+	•	Switch libraries (e.g., Mongoose → Prisma)
+	•	Change core logic (e.g., salary-based rate computation update)
+	•	Add optional flows (e.g., async OCR queue)
+	•	Reject a proposal (document why not as well)
+	•	Modify core schema (e.g., changing claim approval flow)
+	•	Make a tradeoff decision (e.g., synchronous vs. async)
+
+
+---
+
+## Development Phase: 1
+
+### [2025-05-26] Adopt TailwindCSS + ShadCN for UI
+- **Status**: Accepted
+- **Context**: Needed a scalable, modern frontend with consistent components.
+- **Decision**: Chose TailwindCSS for utility-first styling and ShadCN UI for headless component logic.
+- **Consequences**: Rapid UI development and flexibility, but requires knowledge of Tailwind conventions.
+
+### [2025-05-27] Use Winston for Logging
+- **Status**: Accepted
+- **Context**: Required structured logs for debugging, audit trails, and potential production monitoring.
+- **Decision**: Integrated Winston with different transports for dev (console) and prod (rotating files).
+- **Consequences**: Simplified log tracking; extensible for external services like Datadog or ELK.
+
+### [2025-05-27] Setup Swagger for API Documentation
+- **Status**: Accepted
+- **Context**: Needed to document internal API for developer clarity and testing.
+- **Decision**: Chose Swagger UI with OpenAPI YAML spec served via `/api/docs` endpoint.
+- **Consequences**: Easy endpoint testing and visibility, maintained via versioned `docs/swagger.yaml`.
+
+### [2025-05-28] Integrate Clerk for Authentication
+- **Status**: Accepted
+- **Context**: Initial auth used custom JWT flow; needed secure, robust solution with less overhead.
+- **Decision**: Replaced `/auth/login` and `/auth/register` with Clerk's prebuilt flows and middleware. Mapped Clerk user ID (`clerkId`) in internal user model.
+- **Consequences**: Removed boilerplate logic; gained password recovery, MFA, and OAuth capabilities. Tied project identity to external provider.
+
+### [2025-05-28] Adopt Next.js 15 with TypeScript
+- **Status**: Accepted
+- **Context**: Needed a modern, full-stack framework to support API routes, middleware, and frontend integration with Clerk and MongoDB.
+- **Decision**: Adopted Next.js version 15 with TypeScript enabled by default for full type safety and seamless integration with React 19.
+- **Consequences**: Improved DX and productivity, easier server/client hybrid development. Requires keeping up with new Next.js app router conventions.
+
+### [2025-05-28] Adopt `src` Directory Structure
+
+- **Status**: Accepted
+- **Context**: Standardize project structure for better organization and maintainability in a Next.js application.
+- **Decision**: Organized application code (app, lib, models) within a top-level `src` directory.
+- **Consequences**: Aligns with common Next.js practices; requires updating import paths and `tsconfig.json` aliases.
+
+### [2025-05-28] Choose Jest and Supertest for Backend Testing
+
+- **Status**: Accepted
+- **Context**: Needed a framework for unit and integration testing of backend API routes.
+- **Decision**: Selected Jest as the test runner and Supertest for making HTTP requests to API endpoints in tests.
+- **Consequences**: Provides a robust testing environment for backend logic; requires initial configuration and setup.
+
+---
+
+## Development Phase: 2
+
+### [2025-05-28] Adopt Zod for Data Validation
+
+- **Status**: Accepted
+- **Context**: Needed a robust and type-safe library for validating API request payloads and other data structures.
+- **Decision**: Integrated Zod to define schemas and validate incoming data in API routes.
+- **Consequences**: Ensures data integrity and type safety; requires defining Zod schemas for relevant data structures.
+---
+
+### [2025-05-28] Implement Core Data Models
+- **Status**: Accepted
+- **Context**: Needed to define the structure for claims, overtime, files, and audit logs in MongoDB as per SDS.
+- **Decision**: Created Mongoose schemas and models for `Claim`, `Overtime`, `File`, and `AuditLog` collections.
+- **Consequences**: Provides a clear data structure for the application; requires maintaining schema definitions.
+
+### [2025-05-28] Integrate Basic Audit Logging
+- **Status**: Accepted
+- **Context**: Required tracking of key user and system actions for auditability as per BRS.
+- **Decision**: Implemented basic audit logging by creating an `AuditLog` Mongoose model and adding logging calls in relevant API routes (create, update, delete, submit, approve/reject for claims/overtime, file upload).
+- **Consequences**: Provides a foundational audit trail; more detailed logging or a dedicated logging service might be needed for comprehensive production monitoring.
+
+---
+
+

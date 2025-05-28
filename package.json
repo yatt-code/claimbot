@@ -24,11 +24,13 @@
     "supertest": "^7.1.1",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.17.0",
-    "yamljs": "^0.3.0"
+    "yamljs": "^0.3.0",
+    "zod": "^3.25.31"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
+    "@types/mime-types": "^2.1.4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
