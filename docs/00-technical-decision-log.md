@@ -110,5 +110,16 @@ Add a new TDL whenever you:
 
 ---
 
-## Development Phase : 2
+## Development Phase: 3
 
+### [2025-05-29] Integrate React Hook Form and Zod for Frontend Forms
+- **Status**: Accepted
+- **Context**: Needed a robust and type-safe solution for managing form state, validation, and submission on the frontend.
+- **Decision**: Integrated React Hook Form for form management and used Zod with the `@hookform/resolvers/zod` resolver for schema-based validation.
+- **Consequences**: Provides a structured approach to form handling and validation; requires defining Zod schemas for each form. Encountered some complex TypeScript type compatibility issues with optional number inputs that may require further investigation.
+
+### [2025-05-29] Implement Basic Frontend Data Fetching
+- **Status**: Accepted
+- **Context**: Needed to display dynamic data from the backend APIs on frontend pages (Dashboard, My Submissions).
+- **Decision**: Implemented basic data fetching logic using the native `fetch` API within Next.js App Router pages to retrieve claims and overtime data from backend endpoints.
+- **Consequences**: Allows frontend to display backend data; requires handling loading states, errors, and potentially implementing a more sophisticated data fetching strategy (e.g., SWR, React Query) for better caching and state management in the future.
