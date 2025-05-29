@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import FileUploader from "@/components/FileUploader";
+import { DatePicker } from "@/components/DatePicker"; // Import DatePicker
 import {
   Form,
   FormControl,
@@ -11,27 +12,22 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-// TODO: Implement date picker component
-// TODO: Implement time range picker component
-// TODO: Implement form handling with react-hook-form and Zod
-
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-// TODO: Implement date picker component
 // TODO: Implement time range picker component
 // TODO: Implement file uploader component enhancements (preview, removal)
-// TODO: Handle file uploads separately after overtime submission
 
 // Define Zod schema for overtime form
 const overtimeFormSchema = z.object({
-  date: z.string().min(1, { message: "Date is required." }), // Assuming date is string for now, will adjust with date picker
-  startTime: z.string().min(1, { message: "Start time is required." }), // Assuming time is string for now, will adjust with time picker
-  endTime: z.string().min(1, { message: "End time is required." }), // Assuming time is string for now, will adjust with time picker
+  date: z.string().min(1, { message: "Date is required." }),
+  startTime: z.string().min(1, { message: "Start time is required." }),
+  endTime: z.string().min(1, { message: "End time is required." }),
   justification: z.string().min(1, { message: "Justification is required." }),
-  // attachments: z.any().optional(), // File handling will be separate
 });
 
 type OvertimeFormValues = z.infer<typeof overtimeFormSchema>;
@@ -47,18 +43,22 @@ export default function SubmitOvertimePage() {
     },
   });
 
-  // TODO: Handle file uploads separately
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+
   const handleFileChange = (files: FileList | null) => {
-    console.log("Selected files:", files);
-    // Implement file handling logic here
+    setSelectedFiles(files);
   };
 
   async function onSubmit(values: OvertimeFormValues): Promise<void> {
-    console.log("Form submitted:", values);
-    // TODO: Implement actual API call to submit overtime request
+    setIsSubmitting(true);
+    const loadingToast = toast.loading("Submitting overtime request...");
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+
     try {
-      const response = await fetch(`${baseUrl}/api/overtime`, {
+      // 1. Submit Overtime Request
+      const overtimeResponse = await fetch(`${baseUrl}/api/overtime`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,16 +66,44 @@ export default function SubmitOvertimePage() {
         body: JSON.stringify(values),
       });
 
-      if (response.ok) {
-        console.log("Overtime request submitted successfully!");
-        // TODO: Redirect to my submissions page or show success message
-      } else {
-        console.error("Failed to submit overtime request:", response.statusText);
-        // TODO: Show error message to user
+      if (!overtimeResponse.ok) {
+        const errorData = await overtimeResponse.json();
+        throw new Error(errorData.message || "Failed to submit overtime request.");
       }
-    } catch (error) {
+
+      const overtime = await overtimeResponse.json();
+      const overtimeId = overtime._id;
+
+      // 2. Handle File Uploads
+      if (selectedFiles && selectedFiles.length > 0) {
+        const uploadPromises = Array.from(selectedFiles as FileList).map(async (file: File) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("overtimeId", overtimeId); // Associate file with the created overtime
+
+          const uploadResponse = await fetch(`${baseUrl}/api/files/upload`, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            throw new Error(errorData.message || `Failed to upload file: ${file.name}`);
+          }
+          return uploadResponse.json();
+        });
+
+        await Promise.all(uploadPromises);
+      }
+
+      toast.success("Overtime request submitted successfully!", { id: loadingToast });
+      router.push("/my-submissions");
+
+    } catch (error: any) {
+      toast.error(`Submission failed: ${error.message}`, { id: loadingToast });
       console.error("Error submitting overtime request:", error);
-      // TODO: Show error message to user
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -92,8 +120,7 @@ export default function SubmitOvertimePage() {
               <FormItem className="grid gap-2">
                 <FormLabel>Date</FormLabel>
                 <FormControl>
-                  {/* TODO: Date Picker Component */}
-                  <Input type="date" {...field} />
+                  <DatePicker field={field} label="Pick a date" /> {/* Use DatePicker component */}
                 </FormControl>
                 <FormMessage />
               </FormItem>

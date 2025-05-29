@@ -1,90 +1,112 @@
+
+
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import RecentSubmissionsTable from "@/components/RecentSubmissionsTable";
-import { Button } from "@/components/ui/button";
 import { currentUser } from "@clerk/nextjs/server";
+import { useState, useEffect } from "react"; // Import useState and useEffect
 
-// Define the Submission type locally for dummy data (will be replaced by fetched data type)
+
+// Define the Submission type based on expected backend response
 interface Submission {
   _id: string;
-  date: string; // Will need to format date from fetched data
-  type: "Expense" | "Overtime";
-  status: "Approved" | "Pending" | "Rejected" | "Draft"; // Will need to map status from fetched data
-  total: number; // Will need to calculate or extract total from fetched data
+  createdAt: string; // Assuming backend provides creation date
+  type: "Expense" | "Overtime"; // Need to determine type from endpoint
+  status: "Approved" | "Pending" | "Rejected" | "Draft"; // Assuming status field exists
+  totalAmount?: number; // For Expense
+  calculatedAmount?: number; // For Overtime
 }
 
-export default async function DashboardPage() {
-  const user = await currentUser();
-  const userName = user?.firstName || "User";
+export default function DashboardPage() {
+  const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [userName, setUserName] = useState("User"); // Use state for user name
+
+  useEffect(() => {
+    const fetchUserDataAndSubmissions = async () => {
+      try {
+        // Fetch user data
+        const user = await currentUser();
+        setUserName(user?.firstName || "User");
+
+        // Fetch submissions
+        const claimsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/claims`);
+        const overtimeResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/overtime`);
+
+        if (!claimsResponse.ok) {
+          throw new Error(`Failed to fetch claims: ${claimsResponse.statusText}`);
+        }
+        if (!overtimeResponse.ok) {
+          throw new Error(`Failed to fetch overtime: ${overtimeResponse.statusText}`);
+        }
+
+        const claims = await claimsResponse.json();
+        const overtime = await overtimeResponse.json();
+
+        // Combine and format data
+        const combinedSubmissions: Submission[] = [
+          ...claims.map((claim: any) => ({
+            _id: claim._id,
+            createdAt: claim.createdAt,
+            type: "Expense",
+            status: claim.status,
+            totalAmount: claim.totalAmount,
+          })),
+          ...overtime.map((ot: any) => ({
+            _id: ot._id,
+            createdAt: ot.createdAt,
+            type: "Overtime",
+            status: ot.status,
+            calculatedAmount: ot.calculatedAmount,
+          })),
+        ];
+
+        // Sort by creation date (most recent first)
+        combinedSubmissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        // Limit to a certain number for recent submissions, e.g., 5
+        setRecentSubmissions(combinedSubmissions.slice(0, 5));
+
+      } catch (err: any) {
+        setError(err.message);
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserDataAndSubmissions();
+  }, []); // Empty dependency array means this effect runs once on mount
+
   const currentDate = new Date().toLocaleDateString();
 
-  // TODO: Implement proper error handling for fetch calls
-  const fetchSubmissions = async () => {
-    try {
-      const claimsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/claims`);
-      const overtimeResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/overtime`);
-
-      if (!claimsResponse.ok) {
-        console.error("Failed to fetch claims:", claimsResponse.statusText);
-        return []; // Return empty array or handle error appropriately
-      }
-      if (!overtimeResponse.ok) {
-        console.error("Failed to fetch overtime:", overtimeResponse.statusText);
-        return []; // Return empty array or handle error appropriately
-      }
-
-      const claims = await claimsResponse.json();
-      const overtime = await overtimeResponse.json();
-
-      // Combine and format data (This is a simplified example, actual mapping will depend on backend response structure)
-      const combinedSubmissions: Submission[] = [
-        ...claims.map((claim: any) => ({
-          _id: claim._id,
-          date: new Date(claim.createdAt).toLocaleDateString(), // Assuming createdAt exists
-          type: "Expense",
-          status: claim.status, // Assuming status field exists
-          total: claim.totalAmount || 0, // Assuming totalAmount exists
-        })),
-        ...overtime.map((ot: any) => ({
-          _id: ot._id,
-          date: new Date(ot.createdAt).toLocaleDateString(), // Assuming createdAt exists
-          type: "Overtime",
-          status: ot.status, // Assuming status field exists
-          total: ot.calculatedAmount || 0, // Assuming calculatedAmount exists
-        })),
-      ];
-
-      // Sort by date (most recent first)
-      combinedSubmissions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      // Limit to a certain number for recent submissions, e.g., 5
-      return combinedSubmissions.slice(0, 5);
-
-    } catch (error) {
-      console.error("Error fetching submissions:", error);
-      return []; // Return empty array or handle error appropriately
-    }
-  };
-
-  const recentSubmissions = await fetchSubmissions();
-
-
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">Hello, {userName} 👋 Today's Date: {currentDate}</h1>
+    <div className="container mx-auto py-4 px-4 md:py-8 md:px-6"> {/* Added responsive padding */}
+      <h1 className="text-xl md:text-2xl font-bold mb-4">Hello, {userName} 👋 Today's Date: {currentDate}</h1> {/* Adjusted heading size */}
 
-      <div className="flex space-x-4 mb-8">
+      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-8"> {/* Adjusted button layout */}
         <Link href="/submit/expense">
-          <Button>+ Submit Expense</Button>
+          <Button className="w-full md:w-auto">+ Submit Expense</Button> {/* Made button full width on small screens */}
         </Link>
         <Link href="/submit/overtime">
-          <Button>+ Submit Overtime</Button>
+          <Button className="w-full md:w-auto">+ Submit Overtime</Button> {/* Made button full width on small screens */}
         </Link>
       </div>
 
-      <h2 className="text-xl font-semibold mb-4">📄 My Recent Submissions</h2>
-      {recentSubmissions.length > 0 ? (
-        <RecentSubmissionsTable submissions={recentSubmissions} />
-      ) : (
+      <h2 className="text-lg md:text-xl font-semibold mb-4">📄 My Recent Submissions</h2> {/* Adjusted heading size */}
+      {loading && <p>Loading recent submissions...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+      {!loading && !error && recentSubmissions.length > 0 && (
+        <RecentSubmissionsTable submissions={recentSubmissions.map(sub => ({
+          _id: sub._id,
+          date: new Date(sub.createdAt).toLocaleDateString(),
+          type: sub.type,
+          status: sub.status,
+          total: sub.type === "Expense" ? sub.totalAmount ?? 0 : sub.calculatedAmount ?? 0,
+        }))} />
+      )}
+      {!loading && !error && recentSubmissions.length === 0 && (
         <p>No recent submissions found.</p>
       )}
     </div>

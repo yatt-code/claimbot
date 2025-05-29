@@ -15,18 +15,12 @@ This document tracks known bugs, errors, and pending implementation tasks.
 
 ## TODOs
 
--   **Implement Dedicated Date Picker Components:**
-    -   **Description:** Replace native HTML date inputs with a more user-friendly date picker component.
-    -   **Affected Files:** `src/app/submit/expense/page.tsx`, `src/app/submit/overtime/page.tsx`
 -   **Implement Dedicated Time Range Picker Components:**
     -   **Description:** Replace native HTML time inputs with a dedicated time range picker component for overtime requests.
     -   **Affected File:** `src/app/submit/overtime/page.tsx`
 -   **Enhance File Uploader Component:**
     -   **Description:** Add functionality for file preview and removal in the `FileUploader` component.
     -   **Affected File:** `src/components/FileUploader.tsx`
--   **Handle File Uploads Separately:**
-    -   **Description:** Implement logic to upload files to the backend after the main form submission.
-    -   **Affected Files:** `src/app/submit/expense/page.tsx`, `src/app/submit/overtime/page.tsx`
 -   **Implement Full API Integration Details:**
     -   **Description:** Add comprehensive error handling, success messages, and redirection logic after form submissions and data fetching.
     -   **Affected Files:** `src/app/submit/expense/page.tsx`, `src/app/submit/overtime/page.tsx`, `src/app/dashboard/page.tsx`, `src/app/my-submissions/page.tsx`

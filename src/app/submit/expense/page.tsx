@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import FileUploader from "@/components/FileUploader";
+import { DatePicker } from "@/components/DatePicker";
 import {
   Form,
   FormControl,
@@ -18,10 +19,12 @@ import {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import toast from "react-hot-toast"; // Import toast
+import { useRouter } from "next/navigation"; // Import useRouter
+import { useState } from "react"; // Import useState
 
 // TODO: Implement date picker component
 // TODO: Implement file uploader component enhancements (preview, removal)
-// TODO: Handle file uploads separately after claim submission
 
 // Define Zod schema for expense form
 const expenseFormSchema = z.object({
@@ -68,17 +71,22 @@ export default function SubmitExpensePage() {
     },
   });
 
-  // TODO: Handle file uploads separately
+  const router = useRouter(); // Initialize useRouter
+  const [isSubmitting, setIsSubmitting] = useState(false); // State for submission loading
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null); // State for selected files
+
   const handleFileChange = (files: FileList | null) => {
-    console.log("Selected files:", files);
-    // Implement file handling logic here
+    setSelectedFiles(files);
   };
 
-  async function onSubmit(values: ExpenseFormValues) {
-    console.log("Form submitted:", values);
-    // TODO: Implement actual API call to submit expense claim
+  async function onSubmit(values: ExpenseFormValues): Promise<void> {
+    setIsSubmitting(true);
+    const loadingToast = toast.loading("Submitting expense claim...");
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
+
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/claims`, {
+      // 1. Submit Expense Claim
+      const claimResponse = await fetch(`${baseUrl}/api/claims`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -86,16 +94,45 @@ export default function SubmitExpensePage() {
         body: JSON.stringify(values),
       });
 
-      if (response.ok) {
-        console.log("Expense claim submitted successfully!");
-        // TODO: Redirect to my submissions page or show success message
-      } else {
-        console.error("Failed to submit expense claim:", response.statusText);
-        // TODO: Show error message to user
+      if (!claimResponse.ok) {
+        const errorData = await claimResponse.json();
+        throw new Error(errorData.message || "Failed to submit expense claim.");
       }
-    } catch (error) {
+
+      const claim = await claimResponse.json();
+      const claimId = claim._id;
+
+      // 2. Handle File Uploads
+      if (selectedFiles && selectedFiles.length > 0) {
+        const uploadPromises = Array.from(selectedFiles).map(async (file) => {
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("claimId", claimId); // Associate file with the created claim
+
+          const uploadResponse = await fetch(`${baseUrl}/api/files/upload`, {
+            method: "POST",
+            body: formData,
+            // Note: Do not set Content-Type header for FormData
+          });
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse.json();
+            throw new Error(errorData.message || `Failed to upload file: ${file.name}`);
+          }
+          return uploadResponse.json();
+        });
+
+        await Promise.all(uploadPromises);
+      }
+
+      toast.success("Expense claim submitted successfully!", { id: loadingToast });
+      router.push("/my-submissions"); // Redirect to my submissions page
+
+    } catch (error: any) {
+      toast.error(`Submission failed: ${error.message}`, { id: loadingToast });
       console.error("Error submitting expense claim:", error);
-      // TODO: Show error message to user
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -112,8 +149,7 @@ export default function SubmitExpensePage() {
               <FormItem className="grid gap-2">
                 <FormLabel>Date</FormLabel>
                 <FormControl>
-                  {/* TODO: Date Picker Component */}
-                  <Input type="date" {...field} />
+                  <DatePicker field={field} label="Pick a date" /> {/* Use DatePicker component */}
                 </FormControl>
                 <FormMessage />
               </FormItem>

@@ -123,3 +123,51 @@ Add a new TDL whenever you:
 - **Context**: Needed to display dynamic data from the backend APIs on frontend pages (Dashboard, My Submissions).
 - **Decision**: Implemented basic data fetching logic using the native `fetch` API within Next.js App Router pages to retrieve claims and overtime data from backend endpoints.
 - **Consequences**: Allows frontend to display backend data; requires handling loading states, errors, and potentially implementing a more sophisticated data fetching strategy (e.g., SWR, React Query) for better caching and state management in the future.
+
+### [2025-05-30] Configure TailwindCSS and Initialize ShadCN UI
+- **Status**: Accepted
+- **Context**: Needed foundational styling and UI components to begin frontend development for staff-facing modules.
+- **Decision**: Installed and configured TailwindCSS and initialized ShadCN UI using the CLI. Updated `postcss.config.mjs`, `globals.css`, and added `src/lib/utils.ts` as part of ShadCN setup.
+- **Consequences**: Enables consistent, utility-first styling and provides headless UI components compatible with our design approach.
+
+### [2025-05-30] Implement Global UI Components (Button, StatusBadge)
+- **Status**: Accepted
+- **Context**: Required reusable design tokens for actions and status indicators across the UI.
+- **Decision**: Developed `Button` and `StatusBadge` components using ShadCN UI conventions, styled with Tailwind utility classes.
+- **Consequences**: Simplifies UI consistency and promotes reusability across different modules and roles.
+
+### [2025-05-30] Build Clerk-based Auth UI (Login, Register, Profile)
+- **Status**: Accepted
+- **Context**: Needed user-facing authentication interfaces.
+- **Decision**: Leveraged Clerk’s prebuilt components to implement `Login`, `Register`, and `Profile` pages.
+- **Consequences**: Saved dev time; ensures security best practices via Clerk’s platform. UI matches identity-based flow in SDS.
+
+### [2025-05-30] Develop Staff Dashboard and Submission Listing
+- **Status**: Accepted
+- **Context**: Needed landing view for staff users with access to submission tools and tracking.
+- **Decision**: Built dashboard layout with quick action buttons and integrated `RecentSubmissionsTable` with placeholder and dynamic data fetching from backend.
+- **Consequences**: Gives staff a centralized view of recent activity; establishes frontend-backend connectivity.
+
+### [2025-05-30] Create Submit Expense Form (with Validation and Upload)
+- **Status**: Accepted
+- **Context**: Enable staff to submit expense claims with supporting documentation.
+- **Decision**: Designed a structured form using react-hook-form and Zod for validation. Integrated `FileUploader` and placeholder API submission logic.
+- **Consequences**: Staff can input and validate claims in a structured format. Backend integration pending final data flow.
+
+### [2025-05-30] Create Submit Overtime Form (with Validation and Upload)
+- **Status**: Accepted
+- **Context**: Enable staff to request overtime compensation with optional attachments.
+- **Decision**: Created a Zod-validated form with `FileUploader`, `TimeInput`, and `Textarea` fields. Uses react-hook-form for logic.
+- **Consequences**: Supports data collection for overtime with clear validation and future extensibility for complex conditions.
+
+### [2025-05-30] Implement "My Submissions" Page with Dynamic Data
+- **Status**: Accepted
+- **Context**: Needed a centralized view for users to track their claim/overtime submission status.
+- **Decision**: Created `My Submissions` page by integrating `RecentSubmissionsTable` with backend data fetching.
+- **Consequences**: Provides real-time visibility into submission history. Establishes contract with claims/overtime API routes.
+
+### [2025-05-30] Implement DatePicker Component and Integration
+- **Status**: Accepted
+- **Context**: Needed a user-friendly way for users to select dates in forms.
+- **Decision**: Created a reusable `DatePicker` component by composing ShadCN `popover` and `calendar` components and integrated it into the Expense and Overtime submission forms.
+- **Consequences**: Improved user experience for date selection; requires potential future enhancement for time selection.

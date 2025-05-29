@@ -1,70 +1,87 @@
 import RecentSubmissionsTable from "@/components/RecentSubmissionsTable"; // Can potentially rename this to SubmissionTable later
+import { useState, useEffect } from "react"; // Import useState and useEffect
 
-// Define the Submission type locally for fetched data
+// Define the Submission type based on expected backend response
 interface Submission {
   _id: string;
-  date: string; // Will need to format date from fetched data
-  type: "Expense" | "Overtime";
-  status: "Approved" | "Pending" | "Rejected" | "Draft"; // Will need to map status from fetched data
-  total: number; // Will need to calculate or extract total from fetched data
+  createdAt: string; // Assuming backend provides creation date
+  type: "Expense" | "Overtime"; // Need to determine type from endpoint
+  status: "Approved" | "Pending" | "Rejected" | "Draft"; // Assuming status field exists
+  totalAmount?: number; // For Expense
+  calculatedAmount?: number; // For Overtime
 }
 
-export default async function MySubmissionsPage() {
-  // TODO: Implement proper error handling for fetch calls
-  const fetchAllSubmissions = async () => {
-    try {
-      const claimsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/claims`);
-      const overtimeResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/overtime`);
+export default function MySubmissionsPage() {
+  const [allSubmissions, setAllSubmissions] = useState<Submission[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-      if (!claimsResponse.ok) {
-        console.error("Failed to fetch claims:", claimsResponse.statusText);
-        return []; // Return empty array or handle error appropriately
+  useEffect(() => {
+    const fetchAllSubmissions = async () => {
+      try {
+        const claimsResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/claims`);
+        const overtimeResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/overtime`);
+
+        if (!claimsResponse.ok) {
+          throw new Error(`Failed to fetch claims: ${claimsResponse.statusText}`);
+        }
+        if (!overtimeResponse.ok) {
+          throw new Error(`Failed to fetch overtime: ${overtimeResponse.statusText}`);
+        }
+
+        const claims = await claimsResponse.json();
+        const overtime = await overtimeResponse.json();
+
+        // Combine and format data
+        const combinedSubmissions: Submission[] = [
+          ...claims.map((claim: any) => ({
+            _id: claim._id,
+            createdAt: claim.createdAt,
+            type: "Expense",
+            status: claim.status,
+            totalAmount: claim.totalAmount,
+          })),
+          ...overtime.map((ot: any) => ({
+            _id: ot._id,
+            createdAt: ot.createdAt,
+            type: "Overtime",
+            status: ot.status,
+            calculatedAmount: ot.calculatedAmount,
+          })),
+        ];
+
+        // Sort by creation date (most recent first)
+        combinedSubmissions.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+        setAllSubmissions(combinedSubmissions);
+
+      } catch (err: any) {
+        setError(err.message);
+        console.error("Error fetching data:", err);
+      } finally {
+        setLoading(false);
       }
-      if (!overtimeResponse.ok) {
-        console.error("Failed to fetch overtime:", overtimeResponse.statusText);
-        return []; // Return empty array or handle error appropriately
-      }
+    };
 
-      const claims = await claimsResponse.json();
-      const overtime = await overtimeResponse.json();
+    fetchAllSubmissions();
+  }, []); // Empty dependency array means this effect runs once on mount
 
-      // Combine and format data (This is a simplified example, actual mapping will depend on backend response structure)
-      const combinedSubmissions: Submission[] = [
-        ...claims.map((claim: any) => ({
-          _id: claim._id,
-          date: new Date(claim.createdAt).toLocaleDateString(), // Assuming createdAt exists
-          type: "Expense",
-          status: claim.status, // Assuming status field exists
-          total: claim.totalAmount || 0, // Assuming totalAmount exists
-        })),
-        ...overtime.map((ot: any) => ({
-          _id: ot._id,
-          date: new Date(ot.createdAt).toLocaleDateString(), // Assuming createdAt exists
-          type: "Overtime",
-          status: ot.status, // Assuming status field exists
-          total: ot.calculatedAmount || 0, // Assuming calculatedAmount exists
-        })),
-      ];
-
-      // Sort by date (most recent first)
-      combinedSubmissions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-      return combinedSubmissions;
-
-    } catch (error) {
-      console.error("Error fetching submissions:", error);
-      return []; // Return empty array or handle error appropriately
-    }
-  };
-
-  const allSubmissions = await fetchAllSubmissions();
 
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-4">🗂️ My Submissions</h1>
-      {allSubmissions.length > 0 ? (
-        <RecentSubmissionsTable submissions={allSubmissions} />
-      ) : (
+      {loading && <p>Loading submissions...</p>}
+      {error && <p className="text-red-500">Error: {error}</p>}
+      {!loading && !error && allSubmissions.length > 0 && (
+        <RecentSubmissionsTable submissions={allSubmissions.map(sub => ({
+          _id: sub._id,
+          date: new Date(sub.createdAt).toLocaleDateString(),
+          type: sub.type,
+          status: sub.status,
+          total: sub.type === "Expense" ? sub.totalAmount ?? 0 : sub.calculatedAmount ?? 0,
+        }))} />
+      )}
+      {!loading && !error && allSubmissions.length === 0 && (
         <p>No submissions found.</p>
       )}
     </div>
