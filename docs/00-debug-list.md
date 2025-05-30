@@ -7,13 +7,21 @@ This document tracks known bugs, errors, and pending implementation tasks.
 ## Known Issues
 
 #### Persistent TypeScript Type Errors in Expense Form
-- **Status**: Open
+- **Status**: Resolved
 - **Priority**: High
 - **Tags**: `#form`, `#zod`, `#type-error`
-- **Description**: Type compatibility issues between `react-hook-form`, Zod, and optional number inputs persist in the expense form. Errors indicate a mismatch in expected types despite attempts to adjust the Zod schema and input `onChange` handlers.
+- **Description**: Resolved by handling empty string conversion to undefined in input `onChange` and Zod `preprocess` for optional number fields.
 - **Affected File**: `src/app/submit/expense/page.tsx`
 - **Related**: See TDL [2025-05-30] Submit Expense Form Implementation
 
+
+#### TypeScript Type Errors in Claims Backend Tests
+- **Status**: Resolved
+- **Priority**: High
+- **Tags**: `#test`, `#typescript`, `#mocking`
+- **Description**: Persistent TypeScript type compatibility issues exist within the backend claims tests (`__tests__/backend/claims.test.ts`), particularly related to the mocking of Mongoose document methods like `save`. An example is the error at line 138, where the type of the mocked `save` property does not fully match the expected `Mock` type from `jest-mock`. This indicates potential underlying issues with how Mongoose document instances and their methods are being mocked for testing.
+- **Affected File**: `__tests__/backend/claims.test.ts`
+- **Related**: See TDL [2025-05-29] Add Integration Test Scaffolding for API Routes
 
 ---
 

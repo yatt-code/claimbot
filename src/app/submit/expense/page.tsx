@@ -32,24 +32,24 @@ const expenseFormSchema = z.object({
   project: z.string().optional(),
   description: z.string().optional(),
   mileage: z.preprocess(
-    (val) => (val === '' ? undefined : val),
-    z.coerce.number().min(0, { message: "Mileage cannot be negative." }).optional()
+    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    z.number().min(0, { message: "Mileage cannot be negative." }).optional()
   ),
   toll: z.preprocess(
-    (val) => (val === '' ? undefined : val),
-    z.coerce.number().min(0, { message: "Toll cannot be negative." }).optional()
+    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    z.number().min(0, { message: "Toll cannot be negative." }).optional()
   ),
   petrol: z.preprocess(
-    (val) => (val === '' ? undefined : val),
-    z.coerce.number().min(0, { message: "Petrol cannot be negative." }).optional()
+    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    z.number().min(0, { message: "Petrol cannot be negative." }).optional()
   ),
   meal: z.preprocess(
-    (val) => (val === '' ? undefined : val),
-    z.coerce.number().min(0, { message: "Meal cannot be negative." }).optional()
+    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    z.number().min(0, { message: "Meal cannot be negative." }).optional()
   ),
   others: z.preprocess(
-    (val) => (val === '' ? undefined : val),
-    z.coerce.number().min(0, { message: "Others cannot be negative." }).optional()
+    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    z.number().min(0, { message: "Others cannot be negative." }).optional()
   ),
   // attachments: z.any().optional(), // File handling will be separate
 });
@@ -57,8 +57,8 @@ const expenseFormSchema = z.object({
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 
 export default function SubmitExpensePage() {
-  const form = useForm<ExpenseFormValues>({
-    resolver: zodResolver(expenseFormSchema),
+  const form = useForm<ExpenseFormValues, any, ExpenseFormValues>({
+    resolver: zodResolver(expenseFormSchema) as any,
     defaultValues: {
       date: "",
       project: "",

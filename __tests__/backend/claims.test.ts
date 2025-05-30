@@ -135,8 +135,8 @@ describe('Claims API Integration Tests', () => {
           userId: staffUser._id,
           status: 'draft',
           ...claimData,
-          save: jest.fn().mockResolvedValue(true), // Mock save on the created instance
-          populate: jest.fn(), // Add populate mock
+          save: jest.fn().mockResolvedValue(true) as Mock, // Mock save on the created instance
+          populate: jest.fn() as Mock, // Add populate mock
           submittedAt: undefined, // Initialize properties that will be set later
           approvedBy: undefined,
           approvedAt: undefined,
@@ -310,7 +310,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const staffClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', project: 'Staff Claim', populate: jest.fn().mockResolvedValue({ _id: mockClaimId, userId: staffUser, status: 'draft', project: 'Staff Claim' }) } as any; // Mock populate with explicit structure
+          const staffClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', project: 'Staff Claim', populate: jest.fn().mockResolvedValue({ _id: mockClaimId, userId: staffUser, status: 'draft', project: 'Staff Claim' }) as Mock } as any; // Mock populate with explicit structure
           mockClaim.findById.mockResolvedValue(staffClaim);
 
           const mockRequest = { headers: {} } as any;
@@ -423,8 +423,8 @@ describe('Claims API Integration Tests', () => {
               project: 'Old Project',
               expenses: { mileage: 10 },
               totalClaim: 10,
-              save: jest.fn().mockResolvedValue(true),
-              populate: jest.fn(), // Add populate mock
+              save: jest.fn().mockResolvedValue(true) as Mock,
+              populate: jest.fn() as Mock, // Add populate mock
               submittedAt: undefined, // Initialize properties that will be set later
               approvedBy: undefined,
               approvedAt: undefined,
@@ -468,7 +468,7 @@ describe('Claims API Integration Tests', () => {
           mockUser.findOne.mockResolvedValue(staffUser);
 
           const otherUser = { _id: new Types.ObjectId(), clerkId: 'user_other123', role: 'staff' };
-          const otherClaim: MockClaimDocument = { _id: new Types.ObjectId(), userId: otherUser._id, status: 'draft', project: 'Other Claim', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const otherClaim: MockClaimDocument = { _id: new Types.ObjectId(), userId: otherUser._id, status: 'draft', project: 'Other Claim', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(otherClaim);
 
           const updateData = { project: 'Attempted Update' };
@@ -490,7 +490,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', project: 'Submitted Claim', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', project: 'Submitted Claim', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(submittedClaim);
 
           const updateData = { project: 'Attempted Update' };
@@ -517,8 +517,8 @@ describe('Claims API Integration Tests', () => {
               userId: staffUser._id,
               status: 'submitted',
               project: 'Submitted Claim',
-              save: jest.fn().mockResolvedValue(true),
-              populate: jest.fn(), // Add populate mock
+              save: jest.fn().mockResolvedValue(true) as Mock,
+              populate: jest.fn() as Mock, // Add populate mock
               submittedAt: new Date(), // Initialize properties that will be set later
               approvedBy: undefined,
               approvedAt: undefined,
@@ -553,7 +553,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(draftClaim);
 
           const invalidUpdateData = {
@@ -640,7 +640,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(draftClaim);
           mockClaim.findByIdAndDelete.mockResolvedValue(draftClaim); // Mock delete success
 
@@ -667,7 +667,7 @@ describe('Claims API Integration Tests', () => {
           mockUser.findOne.mockResolvedValue(staffUser);
 
           const otherUser = { _id: new Types.ObjectId(), clerkId: 'user_other123', role: 'staff' };
-          const otherClaim: MockClaimDocument = { _id: new Types.ObjectId(), userId: otherUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const otherClaim: MockClaimDocument = { _id: new Types.ObjectId(), userId: otherUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(otherClaim);
 
           const mockRequest = { headers: {} } as any;
@@ -688,7 +688,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(submittedClaim);
 
           const mockRequest = { headers: {} } as any;
@@ -709,7 +709,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: adminUser.clerkId });
           mockUser.findOne.mockResolvedValue(adminUser);
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(submittedClaim);
           mockClaim.findByIdAndDelete.mockResolvedValue(submittedClaim); // Mock delete success
 
@@ -735,7 +735,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(null); // Claim not found
           mockClaim.findByIdAndDelete.mockResolvedValue(null); // Ensure delete is also mocked
 
@@ -757,7 +757,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           const mockRequest = { headers: {} } as any;
           const mockParams = { id: 'invalid-id' };
 
@@ -775,7 +775,7 @@ describe('Claims API Integration Tests', () => {
           // Mock unauthenticated user
           mockAuth.mockReturnValue({ userId: null });
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           const mockRequest = { headers: {} } as any;
           const mockParams = { id: mockClaimId.toString() };
 
@@ -800,8 +800,8 @@ describe('Claims API Integration Tests', () => {
               _id: mockClaimId,
               userId: staffUser._id,
               status: 'draft',
-              save: jest.fn().mockResolvedValue(true),
-              populate: jest.fn(), // Add populate mock
+              save: jest.fn().mockResolvedValue(true) as Mock,
+              populate: jest.fn() as Mock, // Add populate mock
               submittedAt: undefined, // Initialize properties that will be set later
               approvedBy: undefined,
               approvedAt: undefined,
@@ -837,7 +837,7 @@ describe('Claims API Integration Tests', () => {
           mockUser.findOne.mockResolvedValue(staffUser);
 
           const otherUser = { _id: new Types.ObjectId(), clerkId: 'user_other123', role: 'staff' };
-          const otherClaim: MockClaimDocument = { _id: new Types.ObjectId(), userId: otherUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const otherClaim: MockClaimDocument = { _id: new Types.ObjectId(), userId: otherUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(otherClaim);
 
           const mockRequest = { headers: {} } as any;
@@ -858,7 +858,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(submittedClaim);
 
           const mockRequest = { headers: {} } as any;
@@ -879,7 +879,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: managerUser.clerkId });
           mockUser.findOne.mockResolvedValue(managerUser);
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(draftClaim);
 
           const mockRequest = { headers: {} } as any;
@@ -900,7 +900,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(null); // Claim not found
 
           const mockRequest = { headers: {} } as any;
@@ -921,7 +921,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           const mockRequest = { headers: {} } as any;
           const mockParams = { id: 'invalid-id' };
 
@@ -938,7 +938,7 @@ describe('Claims API Integration Tests', () => {
           // Mock unauthenticated user
           mockAuth.mockReturnValue({ userId: null });
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           const mockRequest = { headers: {} } as any;
           const mockParams = { id: mockClaimId.toString() };
 
@@ -962,8 +962,8 @@ describe('Claims API Integration Tests', () => {
               _id: mockClaimId,
               userId: staffUser._id,
               status: 'submitted',
-              save: jest.fn().mockResolvedValue(true),
-              populate: jest.fn(), // Add populate mock
+              save: jest.fn().mockResolvedValue(true) as Mock,
+              populate: jest.fn() as Mock, // Add populate mock
               submittedAt: new Date(), // Initialize properties that will be set
               approvedBy: undefined, // Initialize properties that will be set
               approvedAt: undefined,
@@ -1008,8 +1008,8 @@ describe('Claims API Integration Tests', () => {
               _id: mockClaimId,
               userId: staffUser._id,
               status: 'submitted',
-              save: jest.fn().mockResolvedValue(true),
-              populate: jest.fn(), // Add populate mock
+              save: jest.fn().mockResolvedValue(true) as Mock,
+              populate: jest.fn() as Mock, // Add populate mock
               submittedAt: new Date(), // Initialize properties that will be set
               approvedBy: undefined, // Initialize properties that will be set
               approvedAt: undefined,
@@ -1050,7 +1050,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: managerUser.clerkId });
           mockUser.findOne.mockResolvedValue(managerUser);
 
-          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn(), populate: jest.fn(), submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const draftClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'draft', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: undefined, approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(draftClaim);
 
           const approvalData = { status: 'approved' };
@@ -1072,7 +1072,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: managerUser.clerkId });
           mockUser.findOne.mockResolvedValue(managerUser);
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(submittedClaim);
 
           const invalidApprovalData = {
@@ -1096,7 +1096,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: staffUser.clerkId });
           mockUser.findOne.mockResolvedValue(staffUser);
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(submittedClaim);
 
           const approvalData = { status: 'approved' };
@@ -1118,7 +1118,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: managerUser.clerkId });
           mockUser.findOne.mockResolvedValue(managerUser);
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(null); // Claim not found
 
           const approvalData = { status: 'approved' };
@@ -1140,7 +1140,7 @@ describe('Claims API Integration Tests', () => {
           mockAuth.mockReturnValue({ userId: managerUser.clerkId });
           mockUser.findOne.mockResolvedValue(managerUser);
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           mockClaim.findById.mockResolvedValue(submittedClaim);
 
           const approvalData = { status: 'approved' };
@@ -1161,7 +1161,7 @@ describe('Claims API Integration Tests', () => {
           // Mock unauthenticated user
           mockAuth.mockReturnValue({ userId: null });
 
-          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn(), populate: jest.fn(), submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
+          const submittedClaim: MockClaimDocument = { _id: mockClaimId, userId: staffUser._id, status: 'submitted', save: jest.fn() as Mock, populate: jest.fn() as Mock, submittedAt: new Date(), approvedBy: undefined, approvedAt: undefined, remarks: undefined };
           const mockRequest = { json: async () => ({status: 'apporved'}) } as any;
           const mockParams = { id: mockClaimId.toString() };
 
