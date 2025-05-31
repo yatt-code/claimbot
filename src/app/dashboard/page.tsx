@@ -1,5 +1,3 @@
-
-
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import RecentSubmissionsTable from "@/components/RecentSubmissionsTable";
@@ -46,14 +44,14 @@ export default function DashboardPage() {
 
         // Combine and format data
         const combinedSubmissions: Submission[] = [
-          ...claims.map((claim: any) => ({
+          ...claims.map((claim: Submission): Submission => ({
             _id: claim._id,
             createdAt: claim.createdAt,
             type: "Expense",
             status: claim.status,
             totalAmount: claim.totalAmount,
           })),
-          ...overtime.map((ot: any) => ({
+          ...overtime.map((ot: Submission): Submission => ({
             _id: ot._id,
             createdAt: ot.createdAt,
             type: "Overtime",
@@ -68,8 +66,9 @@ export default function DashboardPage() {
         // Limit to a certain number for recent submissions, e.g., 5
         setRecentSubmissions(combinedSubmissions.slice(0, 5));
 
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred while fetching data.';
+        setError(errorMessage);
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);
@@ -83,7 +82,7 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto py-4 px-4 md:py-8 md:px-6"> {/* Added responsive padding */}
-      <h1 className="text-xl md:text-2xl font-bold mb-4">Hello, {userName} 👋 Today's Date: {currentDate}</h1> {/* Adjusted heading size */}
+      <h1 className="text-xl md:text-2xl font-bold mb-4">Hello, {userName} 👋 Today&apos;s Date: {currentDate}</h1> {/* Adjusted heading size */}
 
       <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-8"> {/* Adjusted button layout */}
         <Link href="/submit/expense">

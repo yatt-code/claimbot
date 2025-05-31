@@ -34,14 +34,14 @@ export default function MySubmissionsPage() {
 
         // Combine and format data
         const combinedSubmissions: Submission[] = [
-          ...claims.map((claim: any) => ({
+          ...claims.map((claim: Submission) => ({
             _id: claim._id,
             createdAt: claim.createdAt,
             type: "Expense",
             status: claim.status,
             totalAmount: claim.totalAmount,
           })),
-          ...overtime.map((ot: any) => ({
+          ...overtime.map((ot: Submission) => ({
             _id: ot._id,
             createdAt: ot.createdAt,
             type: "Overtime",
@@ -55,8 +55,9 @@ export default function MySubmissionsPage() {
 
         setAllSubmissions(combinedSubmissions);
 
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        setError(`Failed to load submissions: ${err instanceof Error ? err.message : 'An unknown error occurred'}`);
+        setAllSubmissions([]); // Clear submissions on error
         console.error("Error fetching data:", err);
       } finally {
         setLoading(false);

@@ -53,7 +53,7 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 }
 ```
 
-> 🔐 *Note:* The `users` collection is extended from Clerk identities using the `clerkId` field as the foreign key. This ensures user records are easily mapped and queried using Clerk's user identity.
+> *Note:* The `users` collection is extended from Clerk identities using the `clerkId` field as the foreign key. This ensures user records are easily mapped and queried using Clerk's user identity.
 
 ### 3.2 Claims Collection
 

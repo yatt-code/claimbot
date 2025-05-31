@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import FileUploader from "@/components/FileUploader";
 import { DatePicker } from "@/components/DatePicker"; // Import DatePicker
+import { TimePicker } from "@/components/TimePicker"; // Import TimePicker
 import {
   Form,
   FormControl,
@@ -19,7 +18,6 @@ import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-// TODO: Implement time range picker component
 // TODO: Implement file uploader component enhancements (preview, removal)
 
 // Define Zod schema for overtime form
@@ -99,8 +97,9 @@ export default function SubmitOvertimePage() {
       toast.success("Overtime request submitted successfully!", { id: loadingToast });
       router.push("/my-submissions");
 
-    } catch (error: any) {
-      toast.error(`Submission failed: ${error.message}`, { id: loadingToast });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast.error(`Submission failed: ${errorMessage}`, { id: loadingToast });
       console.error("Error submitting overtime request:", error);
     } finally {
       setIsSubmitting(false);
@@ -134,8 +133,7 @@ export default function SubmitOvertimePage() {
               <FormItem className="grid gap-2">
                 <FormLabel>Start Time</FormLabel>
                 <FormControl>
-                  {/* TODO: Time Range Picker Component */}
-                  <Input type="time" {...field} />
+                  <TimePicker field={field} label="Start Time" /> {/* Use TimePicker component */}
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -149,8 +147,7 @@ export default function SubmitOvertimePage() {
               <FormItem className="grid gap-2">
                 <FormLabel>End Time</FormLabel>
                 <FormControl>
-                  {/* TODO: Time Range Picker Component */}
-                  <Input type="time" {...field} />
+                  <TimePicker field={field} label="End Time" /> {/* Use TimePicker component */}
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -178,7 +175,7 @@ export default function SubmitOvertimePage() {
           <div className="flex space-x-4 mt-4 md:col-span-2">
             {/* TODO: Implement Save as Draft functionality */}
             <Button variant="secondary" type="button">💾 Save Draft</Button>
-            <Button type="submit">🚀 Submit Request</Button>
+            <Button type="submit" disabled={isSubmitting}>🚀 Submit Request</Button>
           </div>
         </form>
       </Form>

@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import FileUploader from "@/components/FileUploader";
 import { DatePicker } from "@/components/DatePicker";
@@ -13,8 +12,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-// TODO: Implement date picker component
-// TODO: Implement file uploader component
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +20,6 @@ import toast from "react-hot-toast"; // Import toast
 import { useRouter } from "next/navigation"; // Import useRouter
 import { useState } from "react"; // Import useState
 
-// TODO: Implement date picker component
 // TODO: Implement file uploader component enhancements (preview, removal)
 
 // Define Zod schema for expense form
@@ -56,8 +52,11 @@ const expenseFormSchema = z.object({
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
 
+
 export default function SubmitExpensePage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const form = useForm<ExpenseFormValues, any, ExpenseFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(expenseFormSchema) as any,
     defaultValues: {
       date: "",
@@ -128,8 +127,9 @@ export default function SubmitExpensePage() {
       toast.success("Expense claim submitted successfully!", { id: loadingToast });
       router.push("/my-submissions"); // Redirect to my submissions page
 
-    } catch (error: any) {
-      toast.error(`Submission failed: ${error.message}`, { id: loadingToast });
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+      toast.error(`Submission failed: ${errorMessage}`, { id: loadingToast });
       console.error("Error submitting expense claim:", error);
     } finally {
       setIsSubmitting(false);
@@ -301,7 +301,7 @@ export default function SubmitExpensePage() {
           <div className="flex space-x-4 mt-4 md:col-span-2">
             {/* TODO: Implement Save as Draft functionality */}
             <Button variant="secondary" type="button">💾 Save as Draft</Button>
-            <Button type="submit">🚀 Submit Claim</Button>
+            <Button type="submit" disabled={isSubmitting}>🚀 Submit Claim</Button>
           </div>
         </form>
       </Form>

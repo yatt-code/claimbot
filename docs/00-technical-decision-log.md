@@ -171,3 +171,9 @@ Add a new TDL whenever you:
 - **Context**: Needed a user-friendly way for users to select dates in forms.
 - **Decision**: Created a reusable `DatePicker` component by composing ShadCN `popover` and `calendar` components and integrated it into the Expense and Overtime submission forms.
 - **Consequences**: Improved user experience for date selection; requires potential future enhancement for time selection.
+
+### [2025-05-31] Implement TimePicker Component and Integration
+- **Status**: Accepted
+- **Context**: Needed a user-friendly way for users to select times in forms, specifically for overtime start and end times.
+- **Decision**: Created a reusable `TimePicker` component using ShadCN `popover` and `input` components and integrated it into the Overtime submission form for both start and end times. The component was later refined to address TypeScript `any` type issues by making it generic and correctly typing the `field` prop.
+- **Consequences**: Improved user experience for time selection; replaces native HTML time inputs and provides better type safety for form integration.
