@@ -71,7 +71,7 @@ This document tracks known bugs, errors, and pending implementation tasks.
 - **Affected File**: `src/components/FileUploader.tsx`
 
 #### Implement Full API Integration Details
-- **Status**: In Progress
+- **Status**: Resolved
 - **Priority**: High
 - **Tags**: `#api`, `#ux`, `#feedback`
 - **Description**: Add comprehensive error handling, success messages, and redirection logic after form submissions and data fetching.
@@ -89,22 +89,22 @@ This document tracks known bugs, errors, and pending implementation tasks.
 - **Affected Files**: All frontend component and page files
 
 #### Fetch Actual User Name for Dashboard
-- **Status**: Open
+- **Status**: Resolved
 - **Priority**: Medium
 - **Tags**: `#auth`, `#dashboard`, `#clerk`
 - **Description**: Replace the placeholder user name on the dashboard with the actual logged-in user's name fetched from Clerk.
 - **Affected File**: `src/app/dashboard/page.tsx`
 
 #### Potentially Rename Submission Table Component
-- **Status**: Open
+- **Status**: Resolved
 - **Priority**: Low
 - **Tags**: `#naming`, `#refactor`
-- **Description**: Consider renaming `RecentSubmissionsTable` to a more generic name like `SubmissionTable` as it's used for both recent and all submissions.
+- **Description**: Renamed `RecentSubmissionsTable` to `SubmissionTable` as it is used for both recent and all submissions.
 - **Affected Files**:
-  - `src/components/RecentSubmissionsTable.tsx`
+  - `src/components/SubmissionTable.tsx`
   - `src/app/dashboard/page.tsx`
   - `src/app/my-submissions/page.tsx`
 
 ---
 
-_Document Version: 1.2 • Last updated: 2025-05-31 by Code Mode_
+_Document Version: 1.5 • Last updated: 2025-05-31 by Code Mode_

@@ -177,3 +177,34 @@ Add a new TDL whenever you:
 - **Context**: Needed a user-friendly way for users to select times in forms, specifically for overtime start and end times.
 - **Decision**: Created a reusable `TimePicker` component using ShadCN `popover` and `input` components and integrated it into the Overtime submission form for both start and end times. The component was later refined to address TypeScript `any` type issues by making it generic and correctly typing the `field` prop.
 - **Consequences**: Improved user experience for time selection; replaces native HTML time inputs and provides better type safety for form integration.
+
+### [2025-05-31] Enhance File Uploader Component
+- **Status**: Accepted
+- **Context**: Needed to add file preview and removal functionality to the File Uploader component for better user experience.
+- **Decision**: Implemented preview of selected files and a remove button for each file within the `FileUploader` component, integrating with `react-hook-form`'s `field.value` and `field.onChange`.
+- **Consequences**: Users can now see and remove selected files before submission. Requires careful handling of `FileList` and `DataTransfer` objects.
+
+### [2025-05-31] Rename Submission Table Component
+- **Status**: Accepted
+- **Context**: The `RecentSubmissionsTable` component was used for both recent and all submissions, making the name misleading.
+- **Decision**: Renamed the component file from `RecentSubmissionsTable.tsx` to `SubmissionTable.tsx` and updated all import paths and component usages.
+- **Consequences**: Improved code clarity and maintainability with a more accurate component name.
+
+
+### [2025-05-31] Finalize Phase 3 and Defer Responsive Design
+- **Status**: Accepted
+- **Context**: Phase 3 development focused on desktop-first UI. Implementing full responsive design was evaluated as high effort relative to current needs.
+- **Decision**: Defer responsive/mobile layout support to a later phase. Staff users primarily access the system from desktops and are comfortable with current layout.
+- **Consequences**: Allows Phase 3 to close cleanly. A future phase will revisit responsiveness enhancements.
+
+### [2025-05-31] Refactor TimePicker with Strong Type Support
+- **Status**: Accepted
+- **Context**: The `TimePicker` component used `any` for its `field` prop, creating a type safety issue in integration with React Hook Form.
+- **Decision**: Made `TimePicker` a generic component accepting `TFieldValues`, and updated its props to use `ControllerRenderProps` from `react-hook-form`.
+- **Consequences**: Resolved ESLint `no-explicit-any` issues and improved overall component reusability and safety.
+
+### [2025-05-31] Strongly Type Data Fetching Logic
+- **Status**: Accepted
+- **Context**: Data fetching logic in Dashboard and My Submissions pages used `any`, leading to reduced type inference and IDE help.
+- **Decision**: Introduced typed response interfaces for backend data fetches and refactored fetch logic in both pages.
+- **Consequences**: Enhances readability, confidence in shape of remote data, and developer tooling support.

@@ -1,4 +1,4 @@
-import RecentSubmissionsTable from "@/components/RecentSubmissionsTable"; // Can potentially rename this to SubmissionTable later
+import SubmissionTable from "@/components/SubmissionTable";
 import { useState, useEffect } from "react"; // Import useState and useEffect
 
 // Define the Submission type based on expected backend response
@@ -74,7 +74,7 @@ export default function MySubmissionsPage() {
       {loading && <p>Loading submissions...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
       {!loading && !error && allSubmissions.length > 0 && (
-        <RecentSubmissionsTable submissions={allSubmissions.map(sub => ({
+        <SubmissionTable submissions={allSubmissions.map(sub => ({
           _id: sub._id,
           date: new Date(sub.createdAt).toLocaleDateString(),
           type: sub.type,

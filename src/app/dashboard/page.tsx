@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import RecentSubmissionsTable from "@/components/RecentSubmissionsTable";
+import SubmissionTable from "@/components/SubmissionTable";
 import { currentUser } from "@clerk/nextjs/server";
 import { useState, useEffect } from "react"; // Import useState and useEffect
 
@@ -97,7 +97,7 @@ export default function DashboardPage() {
       {loading && <p>Loading recent submissions...</p>}
       {error && <p className="text-red-500">Error: {error}</p>}
       {!loading && !error && recentSubmissions.length > 0 && (
-        <RecentSubmissionsTable submissions={recentSubmissions.map(sub => ({
+        <SubmissionTable submissions={recentSubmissions.map(sub => ({
           _id: sub._id,
           date: new Date(sub.createdAt).toLocaleDateString(),
           type: sub.type,
