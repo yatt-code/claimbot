@@ -208,3 +208,15 @@ Add a new TDL whenever you:
 - **Context**: Data fetching logic in Dashboard and My Submissions pages used `any`, leading to reduced type inference and IDE help.
 - **Decision**: Introduced typed response interfaces for backend data fetches and refactored fetch logic in both pages.
 - **Consequences**: Enhances readability, confidence in shape of remote data, and developer tooling support.
+
+### [2025-05-31] Fetch and Display Logged-in User Name on Dashboard
+- **Status**: Accepted
+- **Context**: The dashboard used a placeholder for the user’s name instead of displaying the actual name from Clerk.
+- **Decision**: Integrated Clerk’s `useUser()` hook to retrieve and display the authenticated user's name on the dashboard.
+- **Consequences**: Improved personalization and correctness of dashboard greeting.
+
+### [2025-05-31] Finalize API Integration with UX Feedback
+- **Status**: Accepted
+- **Context**: Form submissions were missing user feedback mechanisms like success messages and redirection after action completion.
+- **Decision**: Implemented toast notifications, success handlers, and redirection logic for both Expense and Overtime forms.
+- **Consequences**: Provides users with clear feedback and improved experience after submitting forms.

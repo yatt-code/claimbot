@@ -161,12 +161,14 @@ Staff Submission → Manager Review → [Optional] Finance Review → Final Appr
 
 | Phase | Deliverable | Duration | Timeline |
 |-------|-------------|----------|----------|
-| **Phase 1** | BRS Approval & Sign-off | 1 week | Week 1 |
-| **Phase 2** | System Design Specification (SDS) | 1 week | Week 2 |
-| **Phase 3** | Database Schema & Backend Development | 2 weeks | Week 3-4 |
-| **Phase 4** | Frontend Development & System Testing | 2 weeks | Week 5-6 |
-| **Phase 5** | Deployment & Administrator Training | 1 week | Week 7 |
-| **Phase 6** | Go-Live Support & Monitoring | 1 week | Week 8 |
+| **Pre-Phase** | BRS Approval & Sign-off | 1 week | Week 1 |
+| **Pre-Phase** | System Design Specification (SDS) | 1 week | Week 2 |
+| **Phase 1** | Foundation & Core Backend | 2 weeks | Weeks 3-4 |
+| **Phase 2** | Claims & Overtime Backend | 2 weeks | Weeks 5-6 |
+| **Phase 3** | Frontend Core & Staff Modules | 2 weeks | Weeks 7-8 |
+| **Phase 4** | Manager & Admin Modules | 2 weeks | Weeks 9-10 |
+| **Phase 5** | Deployment & Monitoring | 1 week | Week 11 |
+| **Phase 6** | Post-Launch & Future Enhancements | Ongoing | Ongoing |
 
 ---
 
@@ -192,4 +194,4 @@ Staff Submission → Manager Review → [Optional] Finance Review → Final Appr
 
 ---
 
-_Document Version: 1.0 • Last updated: 2025-05-27 by Aiyad_
+_Document Version: 1.2 • Last updated: 2025-05-31 by Code Mode_
