@@ -14,7 +14,10 @@ import {
 } from "@/components/ui/popover"
 
 interface DatePickerProps {
-  field: any; // TODO: Refine type based on react-hook-form field
+  field: {
+    value: string;
+    onChange: (value: string) => void;
+  };
   label: string;
 }
 
@@ -38,8 +41,15 @@ export function DatePicker({ field, label }: DatePickerProps) {
           mode="single"
           selected={field.value ? new Date(field.value) : undefined}
           onSelect={(date) => {
-            // Convert Date to ISO string for consistent handling
-            field.onChange(date ? date.toISOString().split('T')[0] : '');
+            // Use timezone-safe date formatting to avoid off-by-one issues
+            if (date) {
+              const year = date.getFullYear();
+              const month = String(date.getMonth() + 1).padStart(2, '0');
+              const day = String(date.getDate()).padStart(2, '0');
+              field.onChange(`${year}-${month}-${day}`);
+            } else {
+              field.onChange('');
+            }
           }}
           initialFocus
         />
