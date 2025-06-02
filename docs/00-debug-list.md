@@ -13,6 +13,7 @@ This document tracks known bugs, errors, and pending implementation tasks.
 - **Description**: Encountered a TypeScript error (`Cannot find module '@/components/ui/select'`) when importing the ShadCN Select component in `src/app/admin/reports/page.tsx`. This was due to the component not being installed in the project.
 - **Solution**: Running `npx shadcn@latest add select` resolved the error by installing and setting up the component correctly.
 - **Affected File**: `src/app/admin/reports/page.tsx`
+- **Related**: See TDL [2025-05-30] Submit Expense Form Implementation
 
 
 #### Persistent TypeScript Type Errors in Expense Form
@@ -24,13 +25,19 @@ This document tracks known bugs, errors, and pending implementation tasks.
 - **Related**: See TDL [2025-05-30] Submit Expense Form Implementation
 
 
-#### TypeScript Type Errors in Claims Backend Tests
+#### Persistent TypeScript and Mocking Errors in Backend Tests
 - **Status**: Resolved
 - **Priority**: High
-- **Tags**: `#test`, `#typescript`, `#mocking`
-- **Description**: Persistent TypeScript type compatibility issues exist within the backend claims tests (`__tests__/backend/claims.test.ts`), particularly related to the mocking of Mongoose document methods like `save`. An example is the error at line 138, where the type of the mocked `save` property does not fully match the expected `Mock` type from `jest-mock`. This indicates potential underlying issues with how Mongoose document instances and their methods are being mocked for testing.
-- **Affected File**: `__tests__/backend/claims.test.ts`
+- **Tags**: `#test`, `#backend`, `#typescript`, `#mocking`
+- **Description**: TypeScript type compatibility issues in backend tests have been resolved. The mocking approach was standardized across all test files using proper TypeScript types. All backend test files (`claims.test.ts`, `auth.test.ts`, `userManagement.test.ts`, and `overtime.test.ts`) now use consistent mocking patterns with `jest.MockedFunction` and proper type casting with `as unknown as` for complex type conversions. The `Argument of type 'never'.` errors were resolved by properly typing mock return values and using appropriate type assertions.
+- **Solution**: Implemented consistent mocking patterns, removed `as any` usage, added proper TypeScript interfaces, and used `jest.MockedFunction` for better type safety.
+- **Affected Files**: 
+  - `__tests__/backend/claims.test.ts`
+  - `__tests__/backend/auth.test.ts`
+  - `__tests__/backend/userManagement.test.ts`
+  - `__tests__/backend/overtime.test.ts`
 - **Related**: See TDL [2025-05-29] Add Integration Test Scaffolding for API Routes
+
 
 #### `any` Type Usage in Frontend Data Fetching
 - **Status**: Resolved
@@ -89,6 +96,7 @@ This document tracks known bugs, errors, and pending implementation tasks.
   - `src/app/submit/overtime/page.tsx`
   - `src/app/dashboard/page.tsx`
   - `src/app/my-submissions/page.tsx`
+  - `src/app/manager/approvals/[id]/page.tsx`
 
 #### Implement Responsive Design
 - **Status**: Open
@@ -114,6 +122,25 @@ This document tracks known bugs, errors, and pending implementation tasks.
   - `src/app/dashboard/page.tsx`
   - `src/app/my-submissions/page.tsx`
 
+#### Missing Overtime Backend Tests
+- **Status**: Resolved
+- **Priority**: High
+- **Tags**: `#test`, `#backend`, `#coverage`
+- **Description**: Integration tests for the `/api/overtime/[id]` endpoints (GET, PATCH, DELETE) have been implemented in `__tests__/backend/overtime.test.ts`. The test file now includes comprehensive coverage for all overtime management endpoints with proper TypeScript typing and consistent mocking patterns.
+- **Affected File**: `__tests__/backend/overtime.test.ts`
+
+#### Improve Type Safety and Validation Testing in Backend Tests
+- **Status**: Resolved
+- **Priority**: Medium
+- **Tags**: `#test`, `#backend`, `#typescript`, `#validation`
+- **Description**: Backend tests have been updated to use proper TypeScript types instead of `any` casts. All test files now use `as unknown as Request` for type safety and include proper interfaces for mock data. The mocking patterns are consistent across all backend test files with better type safety.
+- **Affected Files**:
+  - `__tests__/backend/userManagement.test.ts`
+  - `__tests__/backend/auth.test.ts`
+  - `__tests__/backend/claims.test.ts`
+  - `__tests__/backend/overtime.test.ts`
+
+
 ---
 
-_Document Version: 1.5 • Last updated: 2025-05-31 by Code Mode_
+_Document Version: 1.9 • Last updated: 2025-06-02 by Code Mode_
