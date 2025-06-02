@@ -37,7 +37,10 @@ export function DatePicker({ field, label }: DatePickerProps) {
         <Calendar
           mode="single"
           selected={field.value ? new Date(field.value) : undefined}
-          onSelect={field.onChange}
+          onSelect={(date) => {
+            // Convert Date to ISO string for consistent handling
+            field.onChange(date ? date.toISOString().split('T')[0] : '');
+          }}
           initialFocus
         />
       </PopoverContent>

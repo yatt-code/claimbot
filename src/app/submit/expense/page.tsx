@@ -26,7 +26,7 @@ import { useState } from "react"; // Import useState
 
 // Define Zod schema for expense form
 const expenseFormSchema = z.object({
-  date: z.string().min(1, { message: "Date is required." }), // Assuming date is string for now, will adjust with date picker
+  date: z.string().min(1, { message: "Date is required." }),
   project: z.string().optional(),
   description: z.string().optional(),
   mileage: z.preprocess(
