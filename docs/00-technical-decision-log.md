@@ -220,3 +220,37 @@ Add a new TDL whenever you:
 - **Context**: Form submissions were missing user feedback mechanisms like success messages and redirection after action completion.
 - **Decision**: Implemented toast notifications, success handlers, and redirection logic for both Expense and Overtime forms.
 - **Consequences**: Provides users with clear feedback and improved experience after submitting forms.
+
+---
+
+## Development Phase: 4
+
+### [2025-06-02] Implement Manager Approval Dashboard
+- **Status**: Accepted
+- **Context**: Needed a dedicated view for managers to see and access pending claims and overtime submissions requiring their approval.
+- **Decision**: Created the `src/app/manager/approvals/page.tsx` page and the `src/components/PendingSubmissionsList.tsx` component. Implemented data fetching to retrieve pending submissions and associated user details.
+- **Consequences**: Managers have a centralized list of items awaiting their action. Requires implementing the detail view and action logic.
+
+### [2025-06-02] Implement Submission Detail View for Managers
+- **Status**: Accepted
+- **Context**: Managers need to view full details of a submission (claims or overtime) and its attachments before approving or rejecting.
+- **Decision**: Created the dynamic route `src/app/manager/approvals/[id]/page.tsx`. Developed components for displaying submission details (`src/components/SubmissionDetailCard.tsx`), attachments (`src/components/AttachmentViewer.tsx`), and action buttons (`src/components/ActionButtons.tsx`). Implemented data fetching for specific submissions and attachments, and added handler functions for approve/reject/comment actions.
+- **Consequences**: Provides managers with necessary information and tools to evaluate submissions.
+
+### [2025-06-02] Implement Admin Rate Configuration
+- **Status**: Accepted
+- **Context**: Administrators need to view and update system-wide rate configurations (e.g., overtime rates).
+- **Decision**: Created the frontend page `src/app/admin/rates/page.tsx` with UI for displaying and editing rates. Implemented data fetching and update logic. Created the dynamic backend API route `src/app/api/config/rates/[id]/route.ts` to handle updating individual rates via PATCH requests.
+- **Consequences**: Provides administrators with control over system rates.
+
+### [2025-06-02] Implement Admin User Management
+- **Status**: Accepted
+- **Context**: Administrators need to manage user accounts (view, create, update, delete).
+- **Decision**: Developed frontend pages for listing users (`src/app/admin/users/page.tsx`), viewing/editing users (`src/app/admin/users/[id]/page.tsx`), and creating new users (`src/app/admin/users/new/page.tsx`). Verified that existing backend API routes (`src/app/api/users/route.ts` and `src/app/api/users/[id]/route.ts`) support these operations with appropriate authorization.
+- **Consequences**: Provides administrators with full control over user accounts.
+
+### [2025-06-02] Implement Audit Logs View
+- **Status**: Accepted
+- **Context**: Administrators need to view a log of key system activities for auditing and troubleshooting.
+- **Decision**: Created the frontend page `src/app/admin/audit-logs/page.tsx` to display audit log entries. Implemented the backend API route `src/app/api/audit-logs/route.ts` with a GET handler to fetch audit logs from the database, including necessary authentication and authorization.
+- **Consequences**: Provides administrators with visibility into system activities.

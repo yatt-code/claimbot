@@ -55,9 +55,9 @@ This plan refines the timeline from the BRS and SDS, detailing key activities fo
     *   **Frontend Integration**: Connect all staff UI components with the backend APIs.
     *   **Responsive Design**: Ensure optimal display across desktop and mobile.
 
-### Phase 4: Manager & Admin Modules (Weeks 7-8)
+### Phase 4: Manager & Admin Modules & Comprehensive Testing (Weeks 7-8+)
 
-*   **Objective**: Implement manager approval workflows and full administrative control panels.
+*   **Objective**: Implement manager approval workflows, full administrative control panels, and conduct comprehensive testing.
 *   **Key Activities**:
     *   **Manager Approval Dashboard**: Develop `PendingSubmissionsList`.
     *   **Submission Detail View**: Implement `SubmissionDetailCard`, `AttachmentViewer`, and `ActionButtons` (approve, reject, comment).
@@ -65,7 +65,7 @@ This plan refines the timeline from the BRS and SDS, detailing key activities fo
     *   **Admin User Management**: Implement `UserTable` with `AddUserModal` and `EditUserModal` for CRUD operations on users.
     *   **Audit Logs View**: Develop `AuditLogTable` for system activity tracking.
     *   **Reports & Export**: Implement `ReportFilterPanel` and `ExportButtons` for generating monthly reports (CSV, Excel).
-    *   **Comprehensive Testing**: Conduct end-to-end system testing, performance testing, and UAT.
+    *   **Comprehensive Testing**: Implement and expand backend integration tests, implement frontend component/page/utility tests, review existing tests, and document the testing strategy. This is an ongoing activity throughout Phase 4 and beyond.
 
 ### Phase 5: Deployment & Monitoring (Week 9)
 
@@ -150,14 +150,30 @@ The AI Assistant (ClaimBot) will primarily focus on passive AI flows for auto-fi
 
 ## 6. Testing Strategy
 
-A multi-faceted testing approach will be employed to ensure system quality.
+A comprehensive, multi-faceted testing approach is being employed to ensure system quality and reliability.
 
-*   **Unit Tests**: Focus on individual functions, components, and API endpoints (Jest, Supertest).
-*   **Integration Tests**: Verify interactions between different modules and services (e.g., frontend-backend communication, database interactions).
-*   **End-to-End (E2E) Tests**: Simulate real user scenarios across the entire application (e.g., Cypress, Playwright).
+*   **Unit Tests**: Focus on individual functions and utility helpers.
+    *   Implemented using Jest.
+    *   Includes tests for frontend utility functions (`src/lib/utils.ts`).
+*   **Frontend Component/Page Tests**: Verify the correct rendering, behavior, and user interactions of React components and Next.js pages.
+    *   Implemented using Jest, React Testing Library, and @testing-library/user-event/@testing-library/dom.
+    *   Covers basic components (`Button`, `StatusBadge`), data display (`SubmissionTable`), and key pages/forms (Submit Expense, Submit Overtime, Manager Approvals, Manager Submission Detail, Admin Rate Config, Admin User List, Admin User Detail/Edit, Admin New User, Admin Audit Logs, Admin Reports).
+    *   Includes testing of data fetching, form submission, validation, error handling, and navigation.
+    *   Dependencies (API calls, hooks, child components) are mocked to isolate the component/page under test.
+*   **Backend Integration Tests**: Verify interactions between backend API routes, services, and the database.
+    *   Implemented using Jest and Supertest (where applicable for API route testing).
+    *   Includes tests for authentication, user management, rate configuration, claims, overtime, audit logs, and reports API routes.
+    *   Progress has been made on expanding coverage for all key backend endpoints.
+*   **End-to-End (E2E) Tests**: Simulate real user scenarios across the entire application stack.
+    *   (Future Implementation) Will be implemented using frameworks like Cypress or Playwright.
 *   **Performance Testing**: Assess system responsiveness and stability under various load conditions.
+    *   (Future Implementation)
 *   **Security Testing**: Conduct vulnerability assessments and penetration testing.
+    *   (Future Implementation)
 *   **User Acceptance Testing (UAT)**: Involve stakeholders to validate that the system meets business requirements.
+    *   (Future Implementation)
+
+This strategy ensures that both frontend and backend functionalities are thoroughly tested in isolation and in integration, providing confidence in the system's correctness and stability.
 
 ## 7. Documentation Plan
 

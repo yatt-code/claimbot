@@ -6,6 +6,15 @@ This document tracks known bugs, errors, and pending implementation tasks.
 
 ## Known Issues
 
+#### ShadCN Select Component Import Error
+- **Status**: Resolved
+- **Priority**: High
+- **Tags**: `#frontend`, `#shadcn`, `#import-error`
+- **Description**: Encountered a TypeScript error (`Cannot find module '@/components/ui/select'`) when importing the ShadCN Select component in `src/app/admin/reports/page.tsx`. This was due to the component not being installed in the project.
+- **Solution**: Running `npx shadcn@latest add select` resolved the error by installing and setting up the component correctly.
+- **Affected File**: `src/app/admin/reports/page.tsx`
+
+
 #### Persistent TypeScript Type Errors in Expense Form
 - **Status**: Resolved
 - **Priority**: High
