@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast'; // Assuming react-hot-toast for notifications
 import Link from 'next/link'; // For linking to user detail pages

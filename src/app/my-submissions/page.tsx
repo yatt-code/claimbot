@@ -1,3 +1,5 @@
+"use client";
+
 import SubmissionTable from "@/components/SubmissionTable";
 import { useState, useEffect } from "react"; // Import useState and useEffect
 

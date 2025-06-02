@@ -1,3 +1,5 @@
+"use client";
+
 import React, { useState, useEffect } from 'react';
 
 // Define AuditLog interface based on expected backend response and AuditLog model

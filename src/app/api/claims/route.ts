@@ -36,10 +36,34 @@ export async function GET(request: Request) {
 
   try {
     // Fetch the authenticated user to determine their role and associated MongoDB user ID
-    const authenticatedUser = await User.findOne({ clerkId: userId });
+    let authenticatedUser = await User.findOne({ clerkId: userId });
 
     if (!authenticatedUser) {
-      return new NextResponse("User not found in database", { status: 404 });
+      // Auto-create user if they don't exist in MongoDB but are authenticated with Clerk
+      // This handles the case for new users who haven't been manually created yet
+      try {
+        authenticatedUser = await User.create({
+          clerkId: userId,
+          name: "New User", // Will be updated when they complete their profile
+          email: "user@example.com", // Will be updated when they complete their profile
+          department: "General",
+          designation: "Staff",
+          role: "staff", // Default role
+          isActive: true,
+          salary: 0,
+          hourlyRate: 0,
+        });
+      } catch (createError: any) {
+        // If user already exists (race condition), try to find them again
+        if (createError.code === 11000) {
+          authenticatedUser = await User.findOne({ clerkId: userId });
+          if (!authenticatedUser) {
+            return new NextResponse("User creation failed", { status: 500 });
+          }
+        } else {
+          throw createError;
+        }
+      }
     }
 
     let claims;

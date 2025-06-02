@@ -52,12 +52,21 @@ export default function DashboardPage() {
           fetch('/api/overtime')
         ]);
 
-        if (!claimsResponse.ok || !overtimeResponse.ok) {
-          throw new Error('Failed to fetch submissions');
+        // Handle 404 as empty data (no submissions yet)
+        let claims: ClaimResponse[] = [];
+        let overtime: OvertimeResponse[] = [];
+
+        if (claimsResponse.ok) {
+          claims = await claimsResponse.json();
+        } else if (claimsResponse.status !== 404) {
+          console.warn('Claims API error:', claimsResponse.status, claimsResponse.statusText);
         }
 
-        const claims: ClaimResponse[] = await claimsResponse.json();
-        const overtime: OvertimeResponse[] = await overtimeResponse.json();
+        if (overtimeResponse.ok) {
+          overtime = await overtimeResponse.json();
+        } else if (overtimeResponse.status !== 404) {
+          console.warn('Overtime API error:', overtimeResponse.status, overtimeResponse.statusText);
+        }
 
         // Combine and format data
         const combinedSubmissions: Submission[] = [

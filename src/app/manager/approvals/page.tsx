@@ -1,3 +1,5 @@
+"use client";
+
 import PendingSubmissionsList, { PendingItem } from "@/components/PendingSubmissionsList";
 import React, { useState, useEffect } from "react"; // Import useState and useEffect
 

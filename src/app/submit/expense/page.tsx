@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,7 +49,7 @@ const expenseFormSchema = z.object({
     (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
     z.number().min(0, { message: "Others cannot be negative." }).optional()
   ),
-  // attachments: z.any().optional(), // File handling will be separate
+  attachments: z.any().optional(), // File handling
 });
 
 type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
@@ -67,16 +69,12 @@ export default function SubmitExpensePage() {
       petrol: 0,
       meal: 0,
       others: 0,
+      attachments: null,
     },
   });
 
   const router = useRouter(); // Initialize useRouter
   const [isSubmitting, setIsSubmitting] = useState(false); // State for submission loading
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null); // State for selected files
-
-  const handleFileChange = (files: FileList | null) => {
-    setSelectedFiles(files);
-  };
 
   async function onSubmit(values: ExpenseFormValues): Promise<void> {
     setIsSubmitting(true);
@@ -102,8 +100,9 @@ export default function SubmitExpensePage() {
       const claimId = claim._id;
 
       // 2. Handle File Uploads
-      if (selectedFiles && selectedFiles.length > 0) {
-        const uploadPromises = Array.from(selectedFiles).map(async (file) => {
+      const attachments = values.attachments as FileList | null;
+      if (attachments && attachments.length > 0) {
+        const uploadPromises = Array.from(attachments).map(async (file: File) => {
           const formData = new FormData();
           formData.append("file", file);
           formData.append("claimId", claimId); // Associate file with the created claim
@@ -149,7 +148,7 @@ export default function SubmitExpensePage() {
               <FormItem className="grid gap-2">
                 <FormLabel>Date</FormLabel>
                 <FormControl>
-                  <DatePicker field={field} label="Pick a date" /> {/* Use DatePicker component */}
+                  <DatePicker field={field} label="Pick a date" />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -294,9 +293,18 @@ export default function SubmitExpensePage() {
             )}
           />
 
-          <div className="grid gap-2 md:col-span-2">
-            <FileUploader id="attachments" label="Attachments" multiple onChange={handleFileChange} />
-          </div>
+          <FormField
+            control={form.control}
+            name="attachments"
+            render={({ field }) => (
+              <FormItem className="grid gap-2 md:col-span-2">
+                <FormControl>
+                  <FileUploader id="attachments" label="Attachments" multiple field={field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="flex space-x-4 mt-4 md:col-span-2">
             {/* TODO: Implement Save as Draft functionality */}

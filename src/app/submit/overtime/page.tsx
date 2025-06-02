@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import FileUploader from "@/components/FileUploader";
@@ -26,6 +28,7 @@ const overtimeFormSchema = z.object({
   startTime: z.string().min(1, { message: "Start time is required." }),
   endTime: z.string().min(1, { message: "End time is required." }),
   justification: z.string().min(1, { message: "Justification is required." }),
+  attachments: z.any().optional(), // File handling
 });
 
 type OvertimeFormValues = z.infer<typeof overtimeFormSchema>;
@@ -38,16 +41,12 @@ export default function SubmitOvertimePage() {
       startTime: "",
       endTime: "",
       justification: "",
+      attachments: null,
     },
   });
 
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
-
-  const handleFileChange = (files: FileList | null) => {
-    setSelectedFiles(files);
-  };
 
   async function onSubmit(values: OvertimeFormValues): Promise<void> {
     setIsSubmitting(true);
@@ -73,8 +72,9 @@ export default function SubmitOvertimePage() {
       const overtimeId = overtime._id;
 
       // 2. Handle File Uploads
-      if (selectedFiles && selectedFiles.length > 0) {
-        const uploadPromises = Array.from(selectedFiles as FileList).map(async (file: File) => {
+      const attachments = values.attachments as FileList | null;
+      if (attachments && attachments.length > 0) {
+        const uploadPromises = Array.from(attachments).map(async (file: File) => {
           const formData = new FormData();
           formData.append("file", file);
           formData.append("overtimeId", overtimeId); // Associate file with the created overtime
@@ -168,9 +168,18 @@ export default function SubmitOvertimePage() {
             )}
           />
 
-          <div className="grid gap-2 md:col-span-2">
-            <FileUploader id="attachments" label="Optional Proof" multiple onChange={handleFileChange} />
-          </div>
+          <FormField
+            control={form.control}
+            name="attachments"
+            render={({ field }) => (
+              <FormItem className="grid gap-2 md:col-span-2">
+                <FormControl>
+                  <FileUploader id="attachments" label="Optional Proof" multiple field={field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <div className="flex space-x-4 mt-4 md:col-span-2">
             {/* TODO: Implement Save as Draft functionality */}

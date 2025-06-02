@@ -21,7 +21,10 @@ const FileUploader = <TFieldValues extends FieldValues = FieldValues>({
   };
 
   // Ensure field.value is always a FileList or null for consistency
-  const selectedFiles = (field.value as unknown) instanceof FileList ? (field.value as FileList) : null;
+  // Check if we're in browser environment and if field.value is a FileList
+  const selectedFiles = typeof window !== 'undefined' && field.value &&
+    typeof field.value === 'object' &&
+    'length' in field.value ? field.value as FileList : null;
 
   return (
     <div className="grid gap-2">
