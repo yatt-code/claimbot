@@ -19,7 +19,9 @@ interface CachedMongoose {
 }
 
 declare global {
-  var mongoose: CachedMongoose;
+  // Extend the NodeJS global type to include mongoose for hot-reload safe caching
+  // eslint-disable-next-line no-var
+  var mongoose: CachedMongoose | undefined;
 }
 
 if (!global.mongoose) {
@@ -27,6 +29,10 @@ if (!global.mongoose) {
 }
 
 async function dbConnect() {
+  if (!global.mongoose) {
+    global.mongoose = { conn: null, promise: null };
+  }
+
   if (global.mongoose.conn) {
     return global.mongoose.conn;
   }
@@ -34,6 +40,7 @@ async function dbConnect() {
   if (!global.mongoose.promise) {
     const opts = {
       bufferCommands: false,
+      // Remove explicit TLS options to let Mongoose/driver handle Atlas SRV URI defaults
     };
 
     global.mongoose.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {

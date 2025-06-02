@@ -19,8 +19,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import toast from "react-hot-toast"; // Import toast
-import { useRouter } from "next/navigation"; // Import useRouter
-import { useState } from "react"; // Import useState
+import { useRouter, useSearchParams } from "next/navigation"; // Import useRouter and useSearchParams
+import { useState, useEffect } from "react"; // Import useState and useEffect
 
 // TODO: Implement file uploader component enhancements (preview, removal)
 
@@ -30,29 +30,29 @@ const expenseFormSchema = z.object({
   project: z.string().optional(),
   description: z.string().optional(),
   mileage: z.preprocess(
-    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    (val) => val === '' || val === null || val === undefined ? 0 : Number(val),
     z.number().min(0, { message: "Mileage cannot be negative." }).optional()
   ),
   toll: z.preprocess(
-    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    (val) => val === '' || val === null || val === undefined ? 0 : Number(val),
     z.number().min(0, { message: "Toll cannot be negative." }).optional()
   ),
   petrol: z.preprocess(
-    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    (val) => val === '' || val === null || val === undefined ? 0 : Number(val),
     z.number().min(0, { message: "Petrol cannot be negative." }).optional()
   ),
   meal: z.preprocess(
-    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    (val) => val === '' || val === null || val === undefined ? 0 : Number(val),
     z.number().min(0, { message: "Meal cannot be negative." }).optional()
   ),
   others: z.preprocess(
-    (val) => val === '' || val === null || val === undefined ? undefined : Number(val),
+    (val) => val === '' || val === null || val === undefined ? 0 : Number(val),
     z.number().min(0, { message: "Others cannot be negative." }).optional()
   ),
   attachments: z.any().optional(), // File handling
 });
 
-type ExpenseFormValues = z.infer<typeof expenseFormSchema>;
+type ExpenseFormValues = z.infer<typeof expenseFormSchema> & { status?: string };
 
 
 export default function SubmitExpensePage() {
@@ -74,7 +74,35 @@ export default function SubmitExpensePage() {
   });
 
   const router = useRouter(); // Initialize useRouter
+  const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false); // State for submission loading
+
+  // Prefill form if editing a draft
+  useEffect(() => {
+    const editId = searchParams.get("edit");
+    if (editId) {
+      fetch(`/api/claims/${editId}`)
+        .then(res => res.ok ? res.json() : Promise.reject("Failed to fetch claim"))
+        .then(data => {
+          form.reset({
+            date: data.date ? data.date.slice(0, 10) : "",
+            project: data.project || "",
+            description: data.description || "",
+            mileage: data.expenses?.mileage ?? 0,
+            toll: data.expenses?.toll ?? 0,
+            petrol: data.expenses?.petrol ?? 0,
+            meal: data.expenses?.meal ?? 0,
+            others: data.expenses?.others ?? 0,
+            attachments: null,
+            status: data.status,
+          });
+        })
+        .catch(() => {
+          toast.error("Failed to load draft for editing.");
+        });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function onSubmit(values: ExpenseFormValues): Promise<void> {
     setIsSubmitting(true);
@@ -82,22 +110,51 @@ export default function SubmitExpensePage() {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
 
     try {
-      // 1. Submit Expense Claim
-      const claimResponse = await fetch(`${baseUrl}/api/claims`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(values),
-      });
+      const editId = searchParams.get("edit");
+      let claimResponse;
+      if (editId) {
+        // Update existing draft - structure data for PATCH endpoint
+        const patchData = {
+          project: values.project,
+          description: values.description,
+          expenses: {
+            mileage: values.mileage ?? 0,
+            toll: values.toll ?? 0,
+            petrol: values.petrol ?? 0,
+            meal: values.meal ?? 0,
+            others: values.others ?? 0,
+          },
+          status: values.status,
+        };
+        claimResponse = await fetch(`${baseUrl}/api/claims/${editId}`, {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(patchData),
+        });
+      } else {
+        // Create new claim - keep flat structure for POST endpoint
+        claimResponse = await fetch(`${baseUrl}/api/claims`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+      }
 
       if (!claimResponse.ok) {
         const errorData = await claimResponse.json();
         throw new Error(errorData.message || "Failed to submit expense claim.");
       }
 
+      // For PATCH requests, the response might not return the full claim object,
+      // so we don't necessarily need to extract claimId here unless handling file uploads
+      // associated with the updated claim. Assuming file uploads are only for new claims for now.
+      // If file uploads are needed for updates, the PATCH response should return the updated claim.
       const claim = await claimResponse.json();
-      const claimId = claim._id;
+      const claimId = editId || claim._id; // Use editId if updating, otherwise use new claim ID
 
       // 2. Handle File Uploads
       const attachments = values.attachments as FileList | null;
@@ -194,7 +251,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? undefined : Number(e.target.value);
+                      const value = e.target.value === '' ? 0 : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -216,7 +273,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? undefined : Number(e.target.value);
+                      const value = e.target.value === '' ? 0 : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -238,7 +295,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? undefined : Number(e.target.value);
+                      const value = e.target.value === '' ? 0 : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -260,7 +317,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? undefined : Number(e.target.value);
+                      const value = e.target.value === '' ? 0 : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -282,7 +339,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? undefined : Number(e.target.value);
+                      const value = e.target.value === '' ? 0 : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -308,8 +365,26 @@ export default function SubmitExpensePage() {
 
           <div className="flex space-x-4 mt-4 md:col-span-2">
             {/* TODO: Implement Save as Draft functionality */}
-            <Button variant="secondary" type="button">💾 Save as Draft</Button>
-            <Button type="submit" disabled={isSubmitting}>🚀 Submit Claim</Button>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => {
+                // Save as Draft: submit with status 'draft'
+                form.handleSubmit((values) => onSubmit({ ...values, status: 'draft' }))();
+              }}
+            >
+              💾 Save as Draft
+            </Button>
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              onClick={() => {
+                // Submit Claim: submit with status 'submitted'
+                form.handleSubmit((values) => onSubmit({ ...values, status: 'submitted' }))();
+              }}
+            >
+              🚀 Submit Claim
+            </Button>
           </div>
         </form>
       </Form>

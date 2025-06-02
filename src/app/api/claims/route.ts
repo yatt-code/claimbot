@@ -25,7 +25,7 @@ const createClaimSchema = z.object({
   // userId will be derived from authenticated user
 });
 
-export async function GET(request: Request) {
+export async function GET() {
   const { userId } = await auth();
 
   if (!userId) {
@@ -53,9 +53,9 @@ export async function GET(request: Request) {
           salary: 0,
           hourlyRate: 0,
         });
-      } catch (createError: any) {
+      } catch (createError: unknown) {
         // If user already exists (race condition), try to find them again
-        if (createError.code === 11000) {
+        if (createError && typeof createError === 'object' && 'code' in createError && createError.code === 11000) {
           authenticatedUser = await User.findOne({ clerkId: userId });
           if (!authenticatedUser) {
             return new NextResponse("User creation failed", { status: 500 });
@@ -125,10 +125,12 @@ export async function POST(request: Request) {
       return new NextResponse("Invalid request body: " + validationResult.error.errors.map(e => e.message).join(', '), { status: 400 });
     }
 
-    const validatedData = validationResult.data;
+    // Merge status from request body if present
+    const validatedData = { ...validationResult.data, status: body.status };
 
-    // Calculate totalClaim (simplified - does not include mileage calculation based on rate)
-    const totalClaim = (validatedData.expenses?.mileage || 0) +
+    // Calculate totalClaim (mileage at RM0.5/km unless configured differently)
+    const mileageRate = 0.5; // TODO: fetch from config if available
+    const totalClaim = ((validatedData.expenses?.mileage || 0) * mileageRate) +
                        (validatedData.expenses?.toll || 0) +
                        (validatedData.expenses?.petrol || 0) +
                        (validatedData.expenses?.meal || 0) +
@@ -144,7 +146,7 @@ export async function POST(request: Request) {
       // mileageRate will be fetched from config later
       totalClaim: totalClaim,
       attachments: [], // Attachments linked via file upload endpoint
-      status: 'draft', // Default status
+      status: validatedData.status ?? 'draft', // Use provided status or default to draft
     });
 
     await newClaim.save();
@@ -160,8 +162,14 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newClaim, { status: 201 });
 
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error creating claim:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    // Return a JSON error response for better frontend handling
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json({
+      success: false,
+      error: "Internal Server Error",
+      details: errorMessage // Include error message for debugging
+    }, { status: 500 });
   }
 }

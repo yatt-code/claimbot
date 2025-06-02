@@ -18,7 +18,8 @@ const updateClaimSchema = z.object({
     meal: z.number().optional(),
     others: z.number().optional(),
   }).optional(),
-  // status, approvedBy, approvedAt, remarks are handled by specific endpoints (submit, approve)
+  status: z.enum(['draft', 'submitted']).optional(), // Allow status updates for draft/submit
+  // approvedBy, approvedAt, remarks are handled by specific endpoints (approve)
 });
 
 // Define Zod schema for approving/rejecting a claim
@@ -28,7 +29,7 @@ const approveClaimSchema = z.object({
 });
 
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, context: { params: { id: string } }) {
   const { userId } = await auth();
 
   if (!userId) {
@@ -44,7 +45,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
       return new NextResponse("User not found in database", { status: 404 });
     }
 
-    const { id } = params;
+    // Await params as per Next.js 15 dynamic route API
+    const { id } = await context.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return new NextResponse("Invalid claim ID format", { status: 400 });
@@ -92,7 +94,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         return new NextResponse("User not found in database", { status: 404 });
       }
 
-      const { id } = params;
+      const { id } = await params;
 
       if (!mongoose.Types.ObjectId.isValid(id)) {
         return new NextResponse("Invalid claim ID format", { status: 400 });
@@ -134,15 +136,32 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       // Apply updates
       if (validatedData.project !== undefined) claim.project = validatedData.project;
       if (validatedData.description !== undefined) claim.description = validatedData.description;
+      // Apply updates
+      if (validatedData.project !== undefined) claim.project = validatedData.project;
+      if (validatedData.description !== undefined) claim.description = validatedData.description;
+      // Always update expenses if provided, even if some fields are 0 or undefined
       if (validatedData.expenses !== undefined) {
-          // Merge expenses or replace? Replacing for now.
-          claim.expenses = validatedData.expenses;
-          // Recalculate totalClaim after expenses update
-          claim.totalClaim = (claim.expenses?.mileage || 0) +
+          // Ensure claim.expenses is initialized if it's null or undefined
+          if (!claim.expenses) {
+              claim.expenses = { mileage: 0, toll: 0, petrol: 0, meal: 0, others: 0 };
+          }
+          claim.expenses.mileage = validatedData.expenses.mileage ?? 0;
+          claim.expenses.toll = validatedData.expenses.toll ?? 0;
+          claim.expenses.petrol = validatedData.expenses.petrol ?? 0;
+          claim.expenses.meal = validatedData.expenses.meal ?? 0;
+          claim.expenses.others = validatedData.expenses.others ?? 0;
+
+          // Recalculate totalClaim after expenses update (mileage at RM0.5/km)
+          const mileageRate = 0.5; // TODO: fetch from config if available
+          claim.totalClaim = ((claim.expenses?.mileage || 0) * mileageRate) +
                              (claim.expenses?.toll || 0) +
                              (claim.expenses?.petrol || 0) +
                              (claim.expenses?.meal || 0) +
                              (claim.expenses?.others || 0);
+      }
+      // Allow status update (e.g., draft -> submitted)
+      if (validatedData.status && validatedData.status !== claim.status) {
+        claim.status = validatedData.status;
       }
 
       await claim.save();
@@ -208,7 +227,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
            return new NextResponse("Forbidden", { status: 403 });
       }
 
-      const deletedClaim = await Claim.findByIdAndDelete(id);
+      //const deletedClaim = await Claim.findByIdAndDelete(id);
 
       // Basic Audit Logging
       await AuditLog.create({
