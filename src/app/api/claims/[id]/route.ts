@@ -33,7 +33,8 @@ export async function GET(request: Request, context: { params: { id: string } })
   const { userId } = await auth();
 
   if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
+    console.log('API DEBUG: Unauthorized - No Clerk userId in session');
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   await dbConnect();
@@ -42,31 +43,57 @@ export async function GET(request: Request, context: { params: { id: string } })
     const authenticatedUser = await User.findOne({ clerkId: userId });
 
     if (!authenticatedUser) {
-      return new NextResponse("User not found in database", { status: 404 });
+      console.log('API DEBUG: User not found in database', { sessionClerkId: userId });
+      return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
     // Await params as per Next.js 15 dynamic route API
     const { id } = await context.params;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
-      return new NextResponse("Invalid claim ID format", { status: 400 });
+      console.log('API DEBUG: Invalid claim ID format', { id });
+      return NextResponse.json({ error: "Invalid claim ID format" }, { status: 400 });
     }
 
-    const claim = await Claim.findById(id).populate('userId', 'name email role'); // Populate user info
+    const claim = await Claim.findById(id).populate('userId', 'name email roles'); // Updated to use roles instead of role
 
     if (!claim) {
-      return new NextResponse("Claim not found", { status: 404 });
+      console.log('API DEBUG: Claim not found', { id });
+      return NextResponse.json({ error: "Claim not found" }, { status: 404 });
     }
+
+    // Get the claim owner's user ID (handle both populated and non-populated cases)
+    const claimOwnerId = claim.userId._id ? claim.userId._id.toString() : claim.userId.toString();
+
+    // Debug logging for access issues
+    console.log('API DEBUG:', {
+      sessionClerkId: userId,
+      mongoUserId: authenticatedUser._id.toString(),
+      mongoUserClerkId: authenticatedUser.clerkId,
+      claimUserId: claimOwnerId,
+      authenticatedUserRoles: authenticatedUser.roles,
+      hasStaffRole: authenticatedUser.roles.includes('staff'),
+      isOwner: claimOwnerId === authenticatedUser._id.toString()
+    });
 
     // Authorization check:
     // Staff can only view their own claims
-    if (authenticatedUser.role === 'staff' && claim.userId._id.toString() !== authenticatedUser._id.toString()) {
-        return new NextResponse("Forbidden", { status: 403 });
+    if (authenticatedUser.roles.includes('staff') && !authenticatedUser.hasAnyRole(['manager', 'finance', 'admin', 'superadmin'])) {
+        if (claimOwnerId !== authenticatedUser._id.toString()) {
+            console.log('API DEBUG: Forbidden - staff trying to access another user\'s claim', {
+              sessionClerkId: userId,
+              mongoUserId: authenticatedUser._id.toString(),
+              claimUserId: claimOwnerId,
+              userRoles: authenticatedUser.roles
+            });
+            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        }
     }
     // Managers/Finance/Admins can view claims (Managers might need direct report check here)
     // For now, allow Managers/Finance/Admins to view any claim
-    if (authenticatedUser.role !== 'staff' && authenticatedUser.role !== 'manager' && authenticatedUser.role !== 'finance' && authenticatedUser.role !== 'admin') {
-         return new NextResponse("Forbidden", { status: 403 });
+    else if (!authenticatedUser.hasAnyRole(['manager', 'finance', 'admin', 'superadmin'])) {
+         console.log('API DEBUG: Forbidden - role not allowed', { roles: authenticatedUser.roles });
+         return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
     // TODO: Implement manager specific view (direct reports)
 
@@ -74,7 +101,7 @@ export async function GET(request: Request, context: { params: { id: string } })
 
   } catch (error) {
     console.error("Error fetching claim:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -108,7 +135,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
       // Authorization check:
       // Staff can only update their own claims if status is 'draft'
-      if (authenticatedUser.role === 'staff') {
+      if (authenticatedUser.roles.includes('staff') && !authenticatedUser.hasAnyRole(['manager', 'finance', 'admin', 'superadmin'])) {
           if (claim.userId.toString() !== authenticatedUser._id.toString()) {
               return new NextResponse("Forbidden", { status: 403 });
           }
@@ -117,7 +144,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
           }
       }
       // Admins/Finance can update claims regardless of status (implement specific field restrictions if needed)
-      else if (authenticatedUser.role !== 'admin' && authenticatedUser.role !== 'finance') {
+      else if (!authenticatedUser.hasAnyRole(['admin', 'finance', 'superadmin'])) {
            return new NextResponse("Forbidden", { status: 403 });
       }
 
@@ -214,7 +241,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
 
       // Authorization check:
       // Staff can only delete their own claims if status is 'draft'
-      if (authenticatedUser.role === 'staff') {
+      if (authenticatedUser.roles.includes('staff') && !authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
           if (claim.userId.toString() !== authenticatedUser._id.toString()) {
               return new NextResponse("Forbidden", { status: 403 });
           }
@@ -223,7 +250,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
           }
       }
       // Admins can delete claims regardless of status
-      else if (authenticatedUser.role !== 'admin') {
+      else if (!authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
            return new NextResponse("Forbidden", { status: 403 });
       }
 
@@ -276,7 +303,7 @@ export async function POST_Submit(request: Request, { params }: { params: { id: 
       }
 
       // Authorization check: Staff can only submit their own claims if status is 'draft'
-      if (authenticatedUser.role === 'staff') {
+      if (authenticatedUser.roles.includes('staff') && !authenticatedUser.hasAnyRole(['manager', 'finance', 'admin', 'superadmin'])) {
           if (claim.userId.toString() !== authenticatedUser._id.toString()) {
               return new NextResponse("Forbidden", { status: 403 });
           }
@@ -326,7 +353,7 @@ export async function POST_Approve(request: Request, { params }: { params: { id:
       }
 
       // Authorization check: Only Managers and Finance can approve/reject claims
-      if (authenticatedUser.role !== 'manager' && authenticatedUser.role !== 'finance') {
+      if (!authenticatedUser.hasAnyRole(['manager', 'finance', 'admin', 'superadmin'])) {
            return new NextResponse("Forbidden", { status: 403 });
       }
 

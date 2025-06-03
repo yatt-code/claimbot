@@ -46,7 +46,7 @@ export async function GET(request: Request) {
           email: "user@example.com", // Will be updated when they complete their profile
           department: "General",
           designation: "Staff",
-          role: "staff", // Default role
+          roles: ["staff"], // Default roles array
           isActive: true,
           salary: 0,
           hourlyRate: 0,
@@ -56,7 +56,7 @@ export async function GET(request: Request) {
         if (createError.code === 11000) {
           authenticatedUser = await User.findOne({ clerkId: userId });
           if (!authenticatedUser) {
-            return new NextResponse("User creation failed", { status: 500 });
+            return NextResponse.json({ error: "User creation failed" }, { status: 500 });
           }
         } else {
           throw createError;
@@ -88,7 +88,7 @@ export async function GET(request: Request) {
 
   } catch (error) {
     console.error("Error fetching overtime requests:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -105,12 +105,12 @@ export async function POST(request: Request) {
     const authenticatedUser = await User.findOne({ clerkId: userId });
 
     if (!authenticatedUser) {
-      return new NextResponse("User not found in database", { status: 404 });
+      return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
     // Only Staff can create overtime requests
     if (authenticatedUser.role !== 'staff') {
-        return new NextResponse("Forbidden", { status: 403 });
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
     const validationResult = createOvertimeSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return new NextResponse("Invalid request body: " + validationResult.error.errors.map(e => e.message).join(', '), { status: 400 });
+      return NextResponse.json({ error: "Invalid request body", details: validationResult.error.errors.map(e => e.message) }, { status: 400 });
     }
 
     const validatedData = validationResult.data;
@@ -165,6 +165,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error("Error creating overtime request:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

@@ -46,14 +46,24 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
         
         <Button
           variant="destructive"
-          onClick={() => setShowRejectForm(!showRejectForm)}
+          onClick={() => {
+            setShowRejectForm((prev) => {
+              if (!prev) setShowCommentForm(false);
+              return !prev;
+            });
+          }}
         >
           ❌ Reject
         </Button>
         
         <Button
           variant="secondary"
-          onClick={() => setShowCommentForm(!showCommentForm)}
+          onClick={() => {
+            setShowCommentForm((prev) => {
+              if (!prev) setShowRejectForm(false);
+              return !prev;
+            });
+          }}
         >
           💬 Add Comment
         </Button>
@@ -61,7 +71,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       {/* Reject Form */}
       {showRejectForm && (
-        <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+        <div className="bg-red-50 p-4 rounded-lg border border-red-200 max-h-80 overflow-y-auto">
           <div className="space-y-4">
             <div>
               <Label htmlFor="reject-remarks" className="text-red-800">
@@ -72,7 +82,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
                 placeholder="Please provide a reason for rejection..."
                 value={rejectRemarks}
                 onChange={(e) => setRejectRemarks(e.target.value)}
-                className="mt-2"
+                className="mt-2 max-h-32 overflow-y-auto resize-y"
               />
             </div>
             <div className="flex justify-end space-x-2">
@@ -96,7 +106,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
 
       {/* Comment Form */}
       {showCommentForm && (
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 max-h-80 overflow-y-auto">
           <div className="space-y-4">
             <div>
               <Label htmlFor="comment" className="text-blue-800">
@@ -107,7 +117,7 @@ const ActionButtons: React.FC<ActionButtonsProps> = ({
                 placeholder="Enter your comment..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="mt-2"
+                className="mt-2 max-h-32 overflow-y-auto resize-y"
               />
             </div>
             <div className="flex justify-end space-x-2">

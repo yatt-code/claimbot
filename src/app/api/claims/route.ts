@@ -48,7 +48,7 @@ export async function GET() {
           email: "user@example.com", // Will be updated when they complete their profile
           department: "General",
           designation: "Staff",
-          role: "staff", // Default role
+          roles: ["staff"], // Default roles array
           isActive: true,
           salary: 0,
           hourlyRate: 0,
@@ -58,7 +58,7 @@ export async function GET() {
         if (createError && typeof createError === 'object' && 'code' in createError && createError.code === 11000) {
           authenticatedUser = await User.findOne({ clerkId: userId });
           if (!authenticatedUser) {
-            return new NextResponse("User creation failed", { status: 500 });
+            return NextResponse.json({ error: "User creation failed" }, { status: 500 });
           }
         } else {
           throw createError;
@@ -68,15 +68,15 @@ export async function GET() {
 
     let claims;
     // Staff can only see their own claims
-    if (authenticatedUser.role === 'staff') {
+    if (authenticatedUser.roles.includes('staff') && !authenticatedUser.hasAnyRole(['manager', 'finance', 'admin', 'superadmin'])) {
       claims = await Claim.find({ userId: authenticatedUser._id });
     }
     // Admins and Finance can see all claims
-    else if (authenticatedUser.role === 'admin' || authenticatedUser.role === 'finance') {
+    else if (authenticatedUser.hasAnyRole(['admin', 'finance', 'superadmin'])) {
       claims = await Claim.find({});
     }
     // Managers might see direct reports' claims (more complex logic needed here)
-    else if (authenticatedUser.role === 'manager') {
+    else if (authenticatedUser.hasRole('manager')) {
         // For now, managers see no claims until direct report logic is implemented
         claims = []; // Or implement logic to find claims by users they manage
     }
@@ -90,7 +90,7 @@ export async function GET() {
 
   } catch (error) {
     console.error("Error fetching claims:", error);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
 
@@ -108,12 +108,12 @@ export async function POST(request: Request) {
     const authenticatedUser = await User.findOne({ clerkId: userId });
 
     if (!authenticatedUser) {
-      return new NextResponse("User not found in database", { status: 404 });
+      return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
     // Only Staff can create claims
-    if (authenticatedUser.role !== 'staff') {
-        return new NextResponse("Forbidden", { status: 403 });
+    if (!authenticatedUser.roles.includes('staff')) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const body = await request.json();
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     const validationResult = createClaimSchema.safeParse(body);
 
     if (!validationResult.success) {
-      return new NextResponse("Invalid request body: " + validationResult.error.errors.map(e => e.message).join(', '), { status: 400 });
+      return NextResponse.json({ error: "Invalid request body", details: validationResult.error.errors.map(e => e.message) }, { status: 400 });
     }
 
     // Merge status from request body if present
