@@ -31,6 +31,55 @@ export async function GET() {
   }
 }
 
+export async function PATCH(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const id = searchParams.get('id');
+  
+  if (!id) {
+    return new NextResponse("Rate ID is required", { status: 400 });
+  }
+
+  const { userId } = await auth();
+
+  if (!userId) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  await dbConnect();
+
+  try {
+    // Check if user is admin
+    const authenticatedUser = await User.findOne({ clerkId: userId });
+    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
+      return new NextResponse("Forbidden", { status: 403 });
+    }
+
+    const body = await request.json();
+    const { rate } = body;
+
+    if (rate === undefined) {
+      return new NextResponse("Rate value is required", { status: 400 });
+    }
+
+    // Find and update the rate
+    const updatedRate = await RateConfig.findByIdAndUpdate(
+      id,
+      { $set: { value: parseFloat(rate) } },
+      { new: true }
+    );
+
+    if (!updatedRate) {
+      return new NextResponse("Rate not found", { status: 404 });
+    }
+
+    return NextResponse.json(updatedRate);
+
+  } catch (error) {
+    console.error("Error updating rate:", error);
+    return new NextResponse("Internal Server Error", { status: 500 });
+  }
+}
+
 export async function POST(request: Request) {
   const { userId } = await auth();
 

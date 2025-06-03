@@ -254,3 +254,68 @@ Add a new TDL whenever you:
 - **Context**: Administrators need to view a log of key system activities for auditing and troubleshooting.
 - **Decision**: Created the frontend page `src/app/admin/audit-logs/page.tsx` to display audit log entries. Implemented the backend API route `src/app/api/audit-logs/route.ts` with a GET handler to fetch audit logs from the database, including necessary authentication and authorization.
 - **Consequences**: Provides administrators with visibility into system activities.
+---
+
+## Development Phase: 5
+
+### [2025-06-03] Enhanced RBAC System with Superadmin Role
+- **Status**: Accepted
+- **Context**: The original RBAC system had limitations: single role per user, no way to combine admin and manager permissions, and inflexible permission checking. The superadmin role was added to solve the need for accounts with both administrative and managerial capabilities.
+- **Decision**: Implemented a comprehensive RBAC system with:
+  - Migration from single `role` field to `roles` array for multiple role support
+  - Introduction of `superadmin` role with all permissions
+  - Permission-based access control system with hierarchical inheritance
+  - Enhanced middleware with better error handling and route protection
+  - Frontend hooks (`useRBAC`) for role-based UI rendering
+  - Role management utilities for admin interfaces
+  - Migration scripts for backward compatibility
+- **Consequences**: 
+  - **Benefits**: Flexible role assignment, better security, clearer permission model, easier to extend
+  - **Tradeoffs**: More complex role management UI needed, requires data migration, slightly more complex permission checking logic
+  - **Technical Debt**: Need to update all API routes to use new permission system, update documentation
+
+### [2025-06-03] Implement Permission-Based Authorization
+- **Status**: Accepted
+- **Context**: Moving from simple role checking to granular permission-based authorization for better security and flexibility.
+- **Decision**: Created a permission system where roles inherit permissions and specific actions are protected by permissions rather than roles. Example permissions: `users:create`, `claims:approve`, `reports:read:all`, `roles:manage`.
+- **Consequences**: More granular control over access, easier to modify permissions without changing role logic, clearer separation of concerns between authentication and authorization.
+
+### [2025-06-03] Implement Role Hierarchy System
+- **Status**: Accepted
+- **Context**: Need a clear hierarchy where higher roles inherit permissions from lower roles, reducing complexity in permission management.
+- **Decision**: Established role hierarchy: staff(1) < manager(2) < finance(3) < admin(4) < superadmin(5). Higher roles automatically inherit permissions from lower roles.
+- **Consequences**: Simplified permission management, clearer role relationships, but requires careful consideration when adding new roles or changing hierarchy.
+
+### [2025-06-03] Enhanced Middleware with Route Protection
+- **Status**: Accepted
+- **Context**: The original middleware had basic route protection but lacked granular control and proper error handling.
+- **Decision**: Redesigned middleware to use the new RBAC system with:
+  - Route-specific permission checking
+  - Better error messages and logging
+  - Support for both role and permission-based protection
+  - Proper handling of API vs page routes
+- **Consequences**: Better security, clearer access control, improved user experience with better error messages, but requires updating route configurations.
+
+### [2025-06-03] Implement Type-Safe Authentication Utilities
+- **Status**: Accepted
+- **Context**: Previous auth utilities used unsafe `as any` type assertions when accessing Clerk's session claims, causing TypeScript errors and reducing type safety.
+- **Decision**: Created proper TypeScript interfaces for Clerk session claims and implemented a centralized `extractRolesFromSession()` helper function to safely extract user roles. Updated all auth utilities and middleware to use type-safe role extraction.
+- **Consequences**:
+  - **Benefits**: Eliminated all `as any` assertions, improved type safety, better IDE support and error detection
+  - **Tradeoffs**: Slightly more verbose code, requires maintaining custom type definitions for Clerk session structure
+  - **Impact**: All authentication-related code now has proper typing, reducing runtime errors
+
+### [2025-06-03] Enhanced User Experience with Toast Notifications
+- **Status**: Accepted
+- **Context**: Access denied errors were displayed as ugly URL parameters (`?error=access_denied&message=...`), creating poor user experience and exposing error details in browser history.
+- **Decision**: Implemented professional error handling system using:
+  - `react-hot-toast` integration for clean toast notifications
+  - Dedicated `/access-denied` page with auto-redirect functionality
+  - `ErrorHandler` component to convert URL-based errors to toast notifications
+  - Updated middleware to redirect to clean URLs instead of adding error parameters
+- **Consequences**:
+  - **Benefits**: Professional user experience, clean URLs, no sensitive error information in browser history, better visual feedback
+  - **Tradeoffs**: Additional dependency on `react-hot-toast`, slightly more complex error handling flow
+  - **UX Impact**: Users now see clean, professional error messages with appropriate visual feedback instead of technical error URLs
+
+---

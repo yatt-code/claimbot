@@ -1,85 +1,123 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
+import { protectApiRoute } from "@/lib/auth-utils";
+import { z } from "zod";
+
+// Input validation schema
+const createUserSchema = z.object({
+  clerkId: z.string().min(1, "Clerk ID is required"),
+  name: z.string().optional(),
+  email: z.string().email("Valid email is required"),
+  department: z.string().optional(),
+  designation: z.string().optional(),
+  roles: z.array(z.enum(['staff', 'manager', 'finance', 'admin', 'superadmin'])).default(['staff']),
+  salary: z.number().positive().optional(),
+});
 
 export async function GET() {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  await dbConnect();
-
   try {
-    // Fetch the authenticated user to check their role
-    const authenticatedUser = await User.findOne({ clerkId: userId });
+    // Protect route - require admin permissions
+    await protectApiRoute({ 
+      permissions: ['users:read:all'],
+      roles: ['admin', 'superadmin'] 
+    });
 
-    // Basic role check: Only admin can list all users
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
-      return new NextResponse("Forbidden", { status: 403 });
-    }
+    await dbConnect();
 
-    const users = await User.find({});
+    const users = await User.find({}).select('-__v');
     return NextResponse.json(users);
 
   } catch (error) {
     console.error("Error fetching users:", error);
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Unauthorized')) {
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
+      if (error.message.includes('Forbidden')) {
+        return new NextResponse("Forbidden", { status: 403 });
+      }
+    }
+    
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  await dbConnect();
-
   try {
-    // Fetch the authenticated user to check their role
-    const authenticatedUser = await User.findOne({ clerkId: userId });
+    // Protect route - require admin permissions
+    await protectApiRoute({ 
+      permissions: ['users:create'],
+      roles: ['admin', 'superadmin'] 
+    });
 
-    // Basic role check: Only admin can create users
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
-      return new NextResponse("Forbidden", { status: 403 });
-    }
+    await dbConnect();
 
     const body = await request.json();
-    const { clerkId, name, email, department, designation, role, salary } = body;
+    
+    // Validate input
+    const validatedData = createUserSchema.parse(body);
 
-    // Basic validation (more comprehensive validation needed)
-    if (!clerkId || !email || !role) {
-      return new NextResponse("Missing required fields", { status: 400 });
-    }
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      $or: [
+        { clerkId: validatedData.clerkId },
+        { email: validatedData.email }
+      ]
+    });
 
-    // Check if a user with this clerkId or email already exists in our DB
-    const existingUser = await User.findOne({ $or: [{ clerkId }, { email }] });
     if (existingUser) {
-      return new NextResponse("User with this Clerk ID or email already exists", { status: 409 });
+      return new NextResponse("User already exists", { status: 409 });
     }
 
+    // Calculate hourly rate if salary is provided
+    const hourlyRate = validatedData.salary ? validatedData.salary / 173 : undefined;
+
+    // Create new user
     const newUser = new User({
-      clerkId,
-      name,
-      email,
-      department,
-      designation,
-      role,
-      salary,
-      // hourlyRate will be calculated based on salary, potentially in a pre-save hook or service
-      isActive: true, // Default to active
+      ...validatedData,
+      hourlyRate,
+      isActive: true,
     });
 
     await newUser.save();
 
-    return NextResponse.json(newUser, { status: 201 });
+    // Remove sensitive data from response
+    const userResponse = {
+      _id: newUser._id,
+      clerkId: newUser.clerkId,
+      name: newUser.name,
+      email: newUser.email,
+      department: newUser.department,
+      designation: newUser.designation,
+      roles: newUser.roles,
+      isActive: newUser.isActive,
+      createdAt: newUser.createdAt,
+      updatedAt: newUser.updatedAt,
+    };
+
+    return NextResponse.json(userResponse, { status: 201 });
 
   } catch (error) {
     console.error("Error creating user:", error);
+    
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: "Validation failed", details: error.errors },
+        { status: 400 }
+      );
+    }
+    
+    if (error instanceof Error) {
+      if (error.message.includes('Unauthorized')) {
+        return new NextResponse("Unauthorized", { status: 401 });
+      }
+      if (error.message.includes('Forbidden')) {
+        return new NextResponse("Forbidden", { status: 403 });
+      }
+    }
+    
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

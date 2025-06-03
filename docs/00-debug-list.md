@@ -98,6 +98,34 @@ This document tracks known bugs, errors, and pending implementation tasks.
   - `src/app/my-submissions/page.tsx`
   - `src/app/manager/approvals/[id]/page.tsx`
 
+#### Middleware Refactoring Plan
+- **Status**: In Progress
+- **Priority**: High
+- **Tags**: `#middleware`, `#auth`, `#refactor`
+- **Description**: Refactor the authentication and authorization middleware to improve code organization and maintainability.
+- **Plan**:
+  1. **Phase 1: Core Middleware Structure** (Completed)
+     - Implement root-level middleware with role-based access control
+     - Define protected routes and their required roles
+     - Add superadmin role with full access
+  2. **Phase 2: Code Organization**
+     - Move route matchers to a separate config file
+     - Create middleware utilities for common auth checks
+     - Add TypeScript types for route configurations
+  3. **Phase 3: Performance Optimization**
+     - Implement route-based code splitting for middleware
+     - Add caching for user roles to reduce database queries
+     - Optimize matcher patterns for better performance
+  4. **Phase 4: Testing & Documentation**
+     - Add unit tests for middleware functions
+     - Document the middleware architecture and usage
+     - Create examples for common use cases
+- **Affected Files**:
+  - `src/middleware.ts`
+  - `src/types/middleware.ts` (to be created)
+  - `src/lib/middleware-utils.ts` (to be created)
+  - `__tests__/middleware/` (to be created)
+
 #### Implement Responsive Design
 - **Status**: Open
 - **Priority**: Low
