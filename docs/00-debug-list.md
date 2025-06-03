@@ -171,4 +171,88 @@ This document tracks known bugs, errors, and pending implementation tasks.
 
 ---
 
-_Document Version: 1.9 • Last updated: 2025-06-02 by Code Mode_
+## Recent Bug Fixes
+
+#### Persistent '0' in Expense Form Number Fields
+- **Status**: Resolved
+- **Priority**: High
+- **Tags**: `#form`, `#input`, `#ux`
+- **Description**: Number input fields in `/submit/expense` showed persistent '0' values that couldn't be backspaced to empty. Users were forced to input a number before they could delete the '0'.
+- **Solution**:
+  - Modified `onChange` handlers to set `undefined` instead of `0` for empty fields
+  - Updated value display logic to show empty string when value is `0`, `null`, or `undefined`
+  - Changed default form values from `0` to `undefined`
+- **Affected File**: `src/app/submit/expense/page.tsx`
+- **Fixed**: 2025-06-04
+
+#### Role-Based Data Filtering Issues
+- **Status**: Resolved
+- **Priority**: High
+- **Tags**: `#rbac`, `#permissions`, `#api`
+- **Description**: Users (including superadmin and manager) could see all submissions instead of only their own when browsing `/dashboard` or `/my-submissions`. The correct behavior is that these user-facing pages should only show the current user's own submissions, while admin functions for viewing all data should be accessed via `/admin` routes.
+- **Solution**:
+  - Updated claims API: All users (including superadmin) see only their own claims via `/api/claims`
+  - Updated overtime API: All users (including superadmin) see only their own requests via `/api/overtime`
+  - Admin functions for viewing all submissions should use dedicated admin API routes
+  - Fixed inconsistent role checking (was using deprecated `role` field instead of `roles` array)
+- **Affected Files**:
+  - `src/app/api/claims/route.ts`
+  - `src/app/api/overtime/route.ts`
+- **Fixed**: 2025-06-04
+
+#### Submission Permission Restrictions
+- **Status**: Resolved
+- **Priority**: Medium
+- **Tags**: `#rbac`, `#permissions`, `#api`
+- **Description**: Only staff users could submit expense claims and overtime requests, but business requirements dictate that superadmin, admin, and manager roles should also be able to submit on behalf of themselves.
+- **Solution**:
+  - Updated both claims and overtime APIs to allow submissions from staff, manager, admin, and superadmin roles
+  - Used proper `hasAnyRole()` method for consistent role checking across both endpoints
+  - Added clearer error messages for forbidden access
+- **Affected Files**:
+  - `src/app/api/claims/route.ts`
+  - `src/app/api/overtime/route.ts`
+- **Fixed**: 2025-06-04
+
+#### Deprecated Role Field Cleanup
+- **Status**: Resolved
+- **Priority**: Medium
+- **Tags**: `#migration`, `#database`, `#cleanup`
+- **Description**: Removed the deprecated `role` field from the User model and all API routes. The system now exclusively uses the new `roles` array for role-based access control, improving consistency and eliminating confusion between old and new role checking methods.
+- **Solution**:
+  - Removed deprecated `role` field from User model schema
+  - Updated all API routes to use `hasRole()` and `hasAnyRole()` methods consistently
+  - Fixed TypeScript type issues in User model methods
+  - Created migration script to remove `role` field from existing database documents
+  - Updated auth profile endpoint to return `roles` array instead of deprecated `role` field
+- **Affected Files**:
+  - `src/models/User.ts` - Removed deprecated field and fixed typing
+  - `src/app/api/reports/route.ts` - Updated role checking
+  - `src/app/api/overtime/[id]/route.ts` - Updated role checking
+  - `src/app/api/audit-logs/route.ts` - Updated role checking
+  - `src/app/api/files/[id]/route.ts` - Updated role checking
+  - `src/app/api/config/rates/route.ts` - Updated role checking
+  - `src/app/api/config/rates/[id]/route.ts` - Updated role checking
+  - `src/app/api/auth/profile/route.ts` - Updated response format
+  - `src/app/api/admin/users/userId/roles/route.ts` - Fixed auth usage
+  - `scripts/migrations/removeDeprecatedRoleField.ts` - Database cleanup script
+- **Fixed**: 2025-06-04
+
+---
+
+#### Expense Form Data Not Saving for New Submissions
+- **Status**: Resolved
+- **Priority**: High
+- **Tags**: `#form`, `#api`, `#data-structure`
+- **Description**: When creating new expense claims via "Save as Draft" or "Submit Claim" buttons, the expense values (mileage, toll, petrol, meal, others) were not being saved correctly and showed as 0.00 in the submissions list. However, editing existing claims worked correctly.
+- **Root Cause**: The form was sending expense data in a flat structure `{mileage: 5, toll: 10, ...}` for new submissions, but the API expected a nested structure `{expenses: {mileage: 5, toll: 10, ...}}`.
+- **Solution**:
+  - Fixed form submission logic to properly structure expense data for new claims
+  - Ensured both new submissions and edits use the same nested data structure
+  - Maintained proper `?? 0` fallback to convert `undefined` values to `0` for calculations
+- **Affected File**: `src/app/submit/expense/page.tsx`
+- **Fixed**: 2025-06-04
+
+---
+
+_Document Version: 1.12 • Last updated: 2025-06-04 by Code Mode_

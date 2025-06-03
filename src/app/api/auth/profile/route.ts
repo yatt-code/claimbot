@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 
-export async function GET(request: Request) {
+export async function GET() {
   const { userId } = await auth();
 
   if (!userId) {
@@ -32,7 +32,7 @@ export async function GET(request: Request) {
       email: user.email,
       department: user.department,
       designation: user.designation,
-      role: user.role,
+      roles: user.roles,
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,

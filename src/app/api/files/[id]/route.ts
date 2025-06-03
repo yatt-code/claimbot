@@ -41,8 +41,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
     // Staff/Managers can only view files linked to claims/overtime they are involved with.
     // This requires fetching the linked claim/overtime and checking user's role/association.
     // Deferring complex authorization for later; for now, a basic check:
-    // Allow if admin/finance OR if the file is uploaded by the authenticated user.
-    if (authenticatedUser.role !== 'admin' && authenticatedUser.role !== 'finance' && fileMetadata.uploadedBy.toString() !== authenticatedUser._id.toString()) {
+    // Allow if admin/finance/superadmin OR if the file is uploaded by the authenticated user.
+    if (!authenticatedUser.hasAnyRole(['admin', 'finance', 'superadmin']) && fileMetadata.uploadedBy.toString() !== authenticatedUser._id.toString()) {
          // TODO: Implement more granular authorization based on linked claim/overtime
          return new NextResponse("Forbidden", { status: 403 });
     }

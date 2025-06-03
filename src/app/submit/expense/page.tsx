@@ -64,11 +64,11 @@ export default function SubmitExpensePage() {
       date: "",
       project: "",
       description: "",
-      mileage: 0,
-      toll: 0,
-      petrol: 0,
-      meal: 0,
-      others: 0,
+      mileage: undefined,
+      toll: undefined,
+      petrol: undefined,
+      meal: undefined,
+      others: undefined,
       attachments: null,
     },
   });
@@ -134,13 +134,26 @@ export default function SubmitExpensePage() {
           body: JSON.stringify(patchData),
         });
       } else {
-        // Create new claim - keep flat structure for POST endpoint
+        // Create new claim - structure data for POST endpoint to match API schema
+        const postData = {
+          date: values.date,
+          project: values.project,
+          description: values.description,
+          expenses: {
+            mileage: values.mileage ?? 0,
+            toll: values.toll ?? 0,
+            petrol: values.petrol ?? 0,
+            meal: values.meal ?? 0,
+            others: values.others ?? 0,
+          },
+          status: values.status,
+        };
         claimResponse = await fetch(`${baseUrl}/api/claims`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(values),
+          body: JSON.stringify(postData),
         });
       }
 
@@ -249,7 +262,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? 0 : Number(e.target.value);
+                      const value = e.target.value === '' ? undefined : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -271,7 +284,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? 0 : Number(e.target.value);
+                      const value = e.target.value === '' ? undefined : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -293,7 +306,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? 0 : Number(e.target.value);
+                      const value = e.target.value === '' ? undefined : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -315,7 +328,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? 0 : Number(e.target.value);
+                      const value = e.target.value === '' ? undefined : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
@@ -337,7 +350,7 @@ export default function SubmitExpensePage() {
                     type="number"
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value === '' ? 0 : Number(e.target.value);
+                      const value = e.target.value === '' ? undefined : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}

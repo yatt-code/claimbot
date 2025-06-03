@@ -250,8 +250,8 @@ export async function POST_Approve(request: Request, { params }: { params: { id:
         return new NextResponse("User not found in database", { status: 404 });
       }
 
-      // Authorization check: Only Managers and Finance can approve/reject overtime requests
-      if (authenticatedUser.role !== 'manager' && authenticatedUser.role !== 'finance') {
+      // Authorization check: Only Managers, Finance, Admins, and Superadmins can approve/reject overtime requests
+      if (!authenticatedUser.hasAnyRole(['manager', 'finance', 'admin', 'superadmin'])) {
            return new NextResponse("Forbidden", { status: 403 });
       }
 

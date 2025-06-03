@@ -17,8 +17,8 @@ export async function GET() {
     // Fetch the authenticated user to check their role
     const authenticatedUser = await User.findOne({ clerkId: userId });
 
-    // Basic role check: Only admin can view audit logs
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
+    // Basic role check: Only admin and superadmin can view audit logs
+    if (!authenticatedUser || !authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 

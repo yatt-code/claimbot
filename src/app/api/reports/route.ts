@@ -30,7 +30,7 @@ export async function GET(request: Request) {
     const authenticatedUser = await User.findOne({ clerkId: userId });
 
     // Basic role check: Only admin can generate reports
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
+    if (!authenticatedUser || !authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 

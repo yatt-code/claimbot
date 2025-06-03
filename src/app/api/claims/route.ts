@@ -66,24 +66,9 @@ export async function GET() {
       }
     }
 
-    let claims;
-    // Staff can only see their own claims
-    if (authenticatedUser.roles.includes('staff') && !authenticatedUser.hasAnyRole(['manager', 'finance', 'admin', 'superadmin'])) {
-      claims = await Claim.find({ userId: authenticatedUser._id });
-    }
-    // Admins and Finance can see all claims
-    else if (authenticatedUser.hasAnyRole(['admin', 'finance', 'superadmin'])) {
-      claims = await Claim.find({});
-    }
-    // Managers might see direct reports' claims (more complex logic needed here)
-    else if (authenticatedUser.hasRole('manager')) {
-        // For now, managers see no claims until direct report logic is implemented
-        claims = []; // Or implement logic to find claims by users they manage
-    }
-    else {
-        // Other roles see no claims
-        claims = [];
-    }
+    // All users (including superadmin) can only see their own claims when accessing via /dashboard or /my-submissions
+    // Admin functions for viewing all claims should be accessed via /admin routes
+    const claims = await Claim.find({ userId: authenticatedUser._id });
 
     // Calculate totalClaim for claims that don't have it or need recalculation
     const mileageRate = 0.5; // TODO: fetch from config if available
@@ -131,9 +116,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
-    // Only Staff can create claims
-    if (!authenticatedUser.roles.includes('staff')) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // Staff, managers, admin, and superadmin can create claims
+    if (!authenticatedUser.hasAnyRole(['staff', 'manager', 'admin', 'superadmin'])) {
+        return NextResponse.json({ error: "Forbidden: Only staff, managers, and admins can submit claims" }, { status: 403 });
     }
 
     const body = await request.json();

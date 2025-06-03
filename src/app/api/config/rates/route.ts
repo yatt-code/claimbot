@@ -17,8 +17,8 @@ export async function GET() {
     // Fetch the authenticated user to check their role
     const authenticatedUser = await User.findOne({ clerkId: userId }); // Assuming User model is imported
 
-    // Basic role check: Only admin can view rate configurations
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
+    // Basic role check: Only admin and superadmin can view rate configurations
+    if (!authenticatedUser || !authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -50,7 +50,7 @@ export async function PATCH(request: Request) {
   try {
     // Check if user is admin
     const authenticatedUser = await User.findOne({ clerkId: userId });
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
+    if (!authenticatedUser || !authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -93,8 +93,8 @@ export async function POST(request: Request) {
     // Fetch the authenticated user to check their role
     const authenticatedUser = await User.findOne({ clerkId: userId }); // Assuming User model is imported
 
-    // Basic role check: Only admin can create/update rate configurations
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
+    // Basic role check: Only admin and superadmin can create/update rate configurations
+    if (!authenticatedUser || !authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 

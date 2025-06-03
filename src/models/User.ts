@@ -18,10 +18,6 @@ export interface IUser extends Document {
   hasAnyRole: (roles: UserRole[]) => boolean;
 }
 
-// For backward compatibility with the old 'role' field
-interface IUserDocument extends IUser {
-  role?: string;
-}
 
 const UserSchema: Schema = new Schema({
   clerkId: { type: String, required: true, unique: true },
@@ -29,12 +25,6 @@ const UserSchema: Schema = new Schema({
   email: { type: String, required: true, unique: true },
   department: { type: String },
   designation: { type: String },
-  // For backward compatibility, we'll keep the role field but it's not used in new code
-  role: { 
-    type: String, 
-    enum: ['staff', 'manager', 'finance', 'admin'],
-    default: 'staff'
-  },
   roles: { 
     type: [{
       type: String, 
@@ -49,31 +39,24 @@ const UserSchema: Schema = new Schema({
 }, { 
   timestamps: true,
   methods: {
-    hasRole(role: UserRole): boolean {
+    hasRole(this: IUser, role: UserRole): boolean {
       // Superadmin has all roles
       if (this.roles.includes('superadmin')) return true;
       return this.roles.includes(role);
     },
-    hasAnyRole(roles: UserRole[]): boolean {
+    hasAnyRole(this: IUser, roles: UserRole[]): boolean {
       // Superadmin has all roles
       if (this.roles.includes('superadmin')) return true;
-      return this.roles.some(role => roles.includes(role as UserRole));
+      return this.roles.some((userRole: UserRole) => roles.includes(userRole));
     }
   }
 });
 
-// Add a pre-save hook to sync the legacy role field with the roles array
-UserSchema.pre('save', function(next) {
-  const user = this as IUserDocument;
-  
-  // If roles is empty but role is set, initialize roles from role
-  if ((!user.roles || user.roles.length === 0) && user.role) {
-    user.roles = [user.role as UserRole];
-  }
-  
+// Add a pre-save hook to ensure staff role is included for all users
+UserSchema.pre('save', function(this: IUser, next) {
   // Ensure staff role is included for all users
-  if (!user.roles.includes('staff')) {
-    user.roles.push('staff');
+  if (!this.roles.includes('staff')) {
+    this.roles.push('staff');
   }
   
   next();

@@ -20,8 +20,8 @@ export async function PATCH(
     // Fetch the authenticated user to check their role
     const authenticatedUser = await User.findOne({ clerkId: userId });
 
-    // Basic role check: Only admin can update rate configurations
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
+    // Basic role check: Only admin and superadmin can update rate configurations
+    if (!authenticatedUser || !authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
       return new NextResponse("Forbidden", { status: 403 });
     }
 
@@ -67,7 +67,7 @@ export async function PATCH(
 //
 //   try {
 //     const authenticatedUser = await User.findOne({ clerkId: userId });
-//     if (!authenticatedUser || authenticatedUser.role !== 'admin') {
+//     if (!authenticatedUser || !authenticatedUser.hasAnyRole(['admin', 'superadmin'])) {
 //       return new NextResponse("Forbidden", { status: 403 });
 //     }
 //

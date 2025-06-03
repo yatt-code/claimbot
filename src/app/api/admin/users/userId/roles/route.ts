@@ -4,8 +4,6 @@ import { withDB } from '@/lib/server/db';
 import User, { UserRole } from '@/models/User';
 import { syncUserRolesToClerk } from '@/lib/clerk';
 
-// Helper type for role checking
-type RoleCheck = (role: string) => boolean;
 
 /**
  * PATCH /api/admin/users/[userId]/roles
@@ -19,7 +17,7 @@ export async function PATCH(
   return withDB(async () => {
     try {
       const { userId: targetUserId } = params;
-      const { userId: currentUserId } = auth();
+      const { userId: currentUserId } = await auth();
       
       if (!currentUserId) {
         return new NextResponse('Unauthorized', { status: 401 });
@@ -85,7 +83,7 @@ export async function GET(
   return withDB(async () => {
     try {
       const { userId } = params;
-      const { userId: currentUserId } = auth();
+      const { userId: currentUserId } = await auth();
       
       if (!currentUserId) {
         return new NextResponse('Unauthorized', { status: 401 });

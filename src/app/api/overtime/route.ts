@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import Overtime from "@/models/Overtime";
 import User from "@/models/User";
-import AuditLog from "@/models/AuditLog"; // Import AuditLog model
+// import AuditLog from "@/models/AuditLog"; // Import AuditLog model
 import { z } from 'zod';
 
 // Define Zod schema for creating an overtime request
@@ -24,7 +24,7 @@ const createOvertimeSchema = z.object({
 });
 
 
-export async function GET(request: Request) {
+export async function GET() {
   const { userId } = await auth();
 
   if (!userId) {
@@ -51,9 +51,9 @@ export async function GET(request: Request) {
           salary: 0,
           hourlyRate: 0,
         });
-      } catch (createError: any) {
+      } catch (createError: unknown) {
         // If user already exists (race condition), try to find them again
-        if (createError.code === 11000) {
+        if (createError && typeof createError === 'object' && 'code' in createError && createError.code === 11000) {
           authenticatedUser = await User.findOne({ clerkId: userId });
           if (!authenticatedUser) {
             return NextResponse.json({ error: "User creation failed" }, { status: 500 });
@@ -64,24 +64,9 @@ export async function GET(request: Request) {
       }
     }
 
-    let overtimeRequests;
-    // Staff can only see their own overtime requests
-    if (authenticatedUser.role === 'staff') {
-      overtimeRequests = await Overtime.find({ userId: authenticatedUser._id });
-    }
-    // Admins and Finance can see all overtime requests
-    else if (authenticatedUser.role === 'admin' || authenticatedUser.role === 'finance') {
-      overtimeRequests = await Overtime.find({});
-    }
-    // Managers might see direct reports' overtime requests (more complex logic needed here)
-    else if (authenticatedUser.role === 'manager') {
-        // For now, managers see no overtime requests until direct report logic is implemented
-        overtimeRequests = []; // Or implement logic to find overtime by users they manage
-    }
-    else {
-        // Other roles see no overtime requests
-        overtimeRequests = [];
-    }
+    // All users (including superadmin) can only see their own overtime requests when accessing via /dashboard or /my-submissions
+    // Admin functions for viewing all requests should be accessed via /admin routes
+    const overtimeRequests = await Overtime.find({ userId: authenticatedUser._id });
 
 
     return NextResponse.json(overtimeRequests);
@@ -108,9 +93,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
-    // Only Staff can create overtime requests
-    if (authenticatedUser.role !== 'staff') {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // Staff, managers, admin, and superadmin can create overtime requests
+    if (!authenticatedUser.hasAnyRole(['staff', 'manager', 'admin', 'superadmin'])) {
+        return NextResponse.json({ error: "Forbidden: Only staff, managers, and admins can submit overtime requests" }, { status: 403 });
     }
 
     const body = await request.json();
