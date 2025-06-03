@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { auth, clerkClient } from '@clerk/nextjs/server';
 import { UserRole } from '@/models/User';
 import { canAccessRoute, hasPermission, hasAnyPermission, hasRole, hasAnyRole } from './rbac';
 
@@ -15,10 +15,23 @@ interface ClerkSessionClaims {
   [key: string]: unknown;
 }
 
-// Helper function to safely extract roles from session
+// Helper function to safely extract roles from session (deprecated)
 function extractRolesFromSession(sessionClaims: unknown): UserRole[] {
   const claims = sessionClaims as ClerkSessionClaims;
   return claims?.publicMetadata?.roles || [];
+}
+
+// Helper function to safely extract roles from Clerk user
+async function extractRolesFromUser(userId: string): Promise<UserRole[]> {
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const roles = user?.publicMetadata?.roles as UserRole[] | undefined;
+    return roles || [];
+  } catch (error) {
+    console.error('Error extracting roles from user:', error);
+    return [];
+  }
 }
 
 /**
@@ -156,7 +169,7 @@ export async function protectApiRoute(options: {
   requireAll?: boolean; // Whether to require all roles/permissions or just any
 }) {
   const session = await requireAuth();
-  const userRoles = extractRolesFromSession(session.sessionClaims);
+  const userRoles = await extractRolesFromUser(session.userId);
   
   if (!userRoles || userRoles.length === 0) {
     throw new Error('Forbidden: No roles assigned');

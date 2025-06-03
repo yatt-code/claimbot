@@ -1,28 +1,21 @@
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import dbConnect from "@/lib/mongodb";
 import User from "@/models/User";
 import mongoose from 'mongoose';
+import { protectApiRoute } from "@/lib/auth-utils";
 
-export async function GET(request: Request, { params }: { params: { id: string } }) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  await dbConnect();
-
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Fetch the authenticated user to check their role
-    const authenticatedUser = await User.findOne({ clerkId: userId });
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
 
-    // Basic role check: Only admin can view other users by ID
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
-      return new NextResponse("Forbidden", { status: 403 });
+    // Protect the route - require admin or manager role
+    const authResult = await protectApiRoute({ roles: ['admin', 'manager'] });
+    if (authResult instanceof NextResponse) {
+      return authResult;
     }
 
-    const { id } = params;
+    await dbConnect();
 
     // Validate if the provided ID is a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -43,25 +36,18 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 }
 
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  await dbConnect();
-
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Fetch the authenticated user to check their role
-    const authenticatedUser = await User.findOne({ clerkId: userId });
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
 
-    // Basic role check: Only admin can update users
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
-      return new NextResponse("Forbidden", { status: 403 });
+    // Protect the route - require admin role for updates
+    const authResult = await protectApiRoute({ roles: ['admin'] });
+    if (authResult instanceof NextResponse) {
+      return authResult;
     }
 
-    const { id } = params;
+    await dbConnect();
 
     // Validate if the provided ID is a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -72,7 +58,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
     // Only allow updating specific fields for safety
     const { name, department, designation, role, salary, isActive } = body;
 
-    const updateData: any = {};
+    const updateData: Partial<typeof User.prototype> = {};
     if (name !== undefined) updateData.name = name;
     if (department !== undefined) updateData.department = department;
     if (designation !== undefined) updateData.designation = designation;
@@ -85,7 +71,6 @@ export async function PATCH(request: Request, { params }: { params: { id: string
         // Assuming 173 hours/month as per BRS/SDS
         updateData.hourlyRate = salary / 173;
     }
-
 
     const updatedUser = await User.findByIdAndUpdate(id, updateData, { new: true });
 
@@ -101,25 +86,18 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 }
 
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
-  const { userId } = await auth();
-
-  if (!userId) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-
-  await dbConnect();
-
+export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    // Fetch the authenticated user to check their role
-    const authenticatedUser = await User.findOne({ clerkId: userId });
+    const resolvedParams = await params;
+    const { id } = resolvedParams;
 
-    // Basic role check: Only admin can delete users
-    if (!authenticatedUser || authenticatedUser.role !== 'admin') {
-      return new NextResponse("Forbidden", { status: 403 });
+    // Protect the route - require admin role for deletions
+    const authResult = await protectApiRoute({ roles: ['admin'] });
+    if (authResult instanceof NextResponse) {
+      return authResult;
     }
 
-    const { id } = params;
+    await dbConnect();
 
     // Validate if the provided ID is a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(id)) {

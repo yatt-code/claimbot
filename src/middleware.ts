@@ -1,21 +1,38 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
+import { clerkClient } from "@clerk/nextjs/server";
 import { NextResponse } from 'next/server';
 import { canAccessRoute } from '@/lib/rbac';
 import type { UserRole } from '@/models/User';
 
-// Type definition for Clerk session claims with our custom metadata
-interface ClerkSessionClaims {
-  publicMetadata?: {
-    roles?: UserRole[];
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-}
-
-// Helper function to safely extract roles from session
-function extractRolesFromSession(sessionClaims: unknown): UserRole[] {
-  const claims = sessionClaims as ClerkSessionClaims;
-  return claims?.publicMetadata?.roles || [];
+// Helper function to safely extract roles from Clerk user with retry logic
+async function extractRolesFromUser(userId: string, retryCount = 0): Promise<UserRole[]> {
+  const maxRetries = 2;
+  
+  try {
+    const client = await clerkClient();
+    const user = await client.users.getUser(userId);
+    const roles = user?.publicMetadata?.roles as UserRole[] | undefined;
+    return roles || [];
+  } catch (error: unknown) {
+    console.error(`Error extracting roles from user (attempt ${retryCount + 1}/${maxRetries + 1}):`, error);
+    
+    // Check if it's a network error and we can retry
+    const isNetworkError = error && typeof error === 'object' && (
+      ('message' in error && typeof error.message === 'string' && error.message.includes('fetch failed')) ||
+      ('errors' in error && Array.isArray(error.errors) && error.errors[0]?.code === 'unexpected_error')
+    );
+    
+    if (retryCount < maxRetries && isNetworkError) {
+      console.log(`Retrying role extraction for user ${userId}...`);
+      // Wait briefly before retry
+      await new Promise(resolve => setTimeout(resolve, 100 * (retryCount + 1)));
+      return extractRolesFromUser(userId, retryCount + 1);
+    }
+    
+    // If all retries failed, return empty array to allow access to basic routes
+    console.warn(`Failed to get roles for user ${userId} after ${retryCount + 1} attempts. Allowing basic access.`);
+    return [];
+  }
 }
 
 // Define public routes that don't require authentication
@@ -28,6 +45,7 @@ const isPublicRoute = createRouteMatcher([
   '/_next(.*)',
   '/api/trpc(.*)',
   '/api/public(.*)',
+  '/api/debug(.*)',
   '/favicon.ico',
   '/api/health(.*)'
 ]);
@@ -74,8 +92,32 @@ export default clerkMiddleware(async (auth, req) => {
   const isApiRoute = pathname.startsWith('/api/');
   
   try {
-    // Get user roles from session
-    const userRoles = extractRolesFromSession(session.sessionClaims);
+    // Get user roles from Clerk user object with retry logic
+    const userRoles = await extractRolesFromUser(session.userId);
+    
+    // If we couldn't get roles and this is a critical admin route, be more restrictive
+    const isCriticalAdminRoute = pathname.includes('/admin') || pathname.includes('/api/users') || pathname.includes('/api/config');
+    
+    if (userRoles.length === 0 && isCriticalAdminRoute) {
+      console.warn(`No roles found for user ${session.userId} accessing critical route ${pathname}. Denying access.`);
+      
+      if (isApiRoute) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Forbidden',
+            message: 'Unable to verify permissions. Please try again or contact support.'
+          }),
+          {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' }
+          }
+        );
+      }
+      
+      const accessDeniedUrl = new URL('/access-denied', req.url);
+      accessDeniedUrl.searchParams.set('error', 'Unable to verify permissions');
+      return NextResponse.redirect(accessDeniedUrl);
+    }
     
     // Check if user has access to the requested path
     const hasAccess = canAccessRoute(userRoles, pathname);
@@ -85,11 +127,11 @@ export default clerkMiddleware(async (auth, req) => {
       
       if (isApiRoute) {
         return new NextResponse(
-          JSON.stringify({ 
-            error: 'Forbidden', 
-            message: 'Insufficient permissions to access this resource' 
-          }), 
-          { 
+          JSON.stringify({
+            error: 'Forbidden',
+            message: 'Insufficient permissions to access this resource'
+          }),
+          {
             status: 403,
             headers: { 'Content-Type': 'application/json' }
           }

@@ -13,6 +13,8 @@ import { Calendar } from '@/components/ui/calendar'; // Assuming shadcn Calendar
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'; // Assuming shadcn Popover components
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'; // Assuming shadcn Select components
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'; // Assuming shadcn Table components
+import AdminLayout from '@/components/AdminLayout';
+import { useRBAC } from '@/hooks/useRBAC';
 
 // Define the schema for report criteria validation
 const reportCriteriaSchema = z.object({
@@ -97,13 +99,33 @@ export default function AdminReportsPage() {
     }
   };
 
-  return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">📊 Reports & Export</h1>
+  const { hasPermission } = useRBAC();
 
-      <div className="bg-white p-6 rounded shadow-md mb-6">
-        <h2 className="text-xl font-semibold mb-4">Report Criteria</h2>
-        <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+  // Check if user has permission to view reports
+  if (!hasPermission('reports:read')) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-600 mb-2">Access Denied</h2>
+            <p className="text-gray-500">You don&apos;t have permission to view reports.</p>
+          </div>
+        </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">📊 Reports & Export</h1>
+          <p className="text-gray-600">Generate and export comprehensive reports</p>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <h2 className="text-xl font-semibold mb-4">Report Criteria</h2>
+          <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
           <div className="flex flex-col space-y-2">
             <label htmlFor="startDate" className="text-gray-700 font-bold">Start Date:</label>
             <Controller
@@ -196,48 +218,65 @@ export default function AdminReportsPage() {
               {isSubmitting || loading ? 'Generating...' : 'Generate Report'}
             </Button>
           </div>
-        </form>
-      </div>
-
-      {loading && <p>Generating report data...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
-      {!loading && !error && reportData.length > 0 && (
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-4">Report Results</h2>
-          {/* Placeholder for export buttons */}
-          <div className="mb-4">
-            <Button variant="outline" className="mr-2">Export as CSV</Button>
-            <Button variant="outline">Export as PDF</Button>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Description/Justification</TableHead>
-                <TableHead>Total</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {reportData.map(row => (
-                <TableRow key={row._id}>
-                  <TableCell>{row.date}</TableCell>
-                  <TableCell>{row.user}</TableCell>
-                  <TableCell>{row.type}</TableCell>
-                  <TableCell>{row.status}</TableCell>
-                  <TableCell>{row.description || row.justification || '-'}</TableCell>
-                  <TableCell>{row.total !== undefined ? row.total.toFixed(2) : '-'}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          </form>
         </div>
-      )}
-       {!loading && !error && reportData.length === 0 && (
-           <p>No report data available. Generate a report using the criteria above.</p>
-       )}
-    </div>
+
+        {loading && (
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <p className="text-gray-600">Generating report data...</p>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+            <p className="text-red-600">Error: {error}</p>
+          </div>
+        )}
+        
+        {!loading && !error && reportData.length > 0 && (
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-semibold mb-4">Report Results</h2>
+              <div className="flex gap-2">
+                <Button variant="outline">Export as CSV</Button>
+                <Button variant="outline">Export as PDF</Button>
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>User</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Description/Justification</TableHead>
+                    <TableHead>Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {reportData.map(row => (
+                    <TableRow key={row._id}>
+                      <TableCell>{row.date}</TableCell>
+                      <TableCell>{row.user}</TableCell>
+                      <TableCell>{row.type}</TableCell>
+                      <TableCell>{row.status}</TableCell>
+                      <TableCell>{row.description || row.justification || '-'}</TableCell>
+                      <TableCell>{row.total !== undefined ? row.total.toFixed(2) : '-'}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        )}
+        
+        {!loading && !error && reportData.length === 0 && (
+          <div className="bg-gray-50 p-6 rounded-lg border">
+            <p className="text-gray-600 text-center">No report data available. Generate a report using the criteria above.</p>
+          </div>
+        )}
+      </div>
+    </AdminLayout>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import AdminLayout from '@/components/AdminLayout';
+import { useRBAC } from '@/hooks/useRBAC';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 // Define AuditLog interface based on expected backend response and AuditLog model
 interface AuditLog {
@@ -46,48 +49,109 @@ export default function AdminAuditLogsPage() {
     fetchAuditLogs();
   }, []); // Empty dependency array means this effect runs once on mount
 
-  return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">📋 Audit Logs</h1>
-      {loading && <p>Loading audit logs...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
-      {!loading && !error && (
-        <div>
-          <h2 className="text-xl font-semibold mb-2">Recent Activities</h2>
-          {/* Basic table for displaying logs */}
-          <table className="min-w-full bg-white border border-gray-200">
-            <thead>
-              <tr>
-                <th className="py-2 px-4 border-b text-left">Timestamp</th>
-                <th className="py-2 px-4 border-b text-left">User ID</th> {/* Could fetch user name later */}
-                <th className="py-2 px-4 border-b text-left">Action</th>
-                <th className="py-2 px-4 border-b text-left">Resource Type</th>
-                <th className="py-2 px-4 border-b text-left">Resource ID</th>
-                <th className="py-2 px-4 border-b text-left">Details</th>
-              </tr>
-            </thead>
-            <tbody>
-              {auditLogs.map(log => (
-                <tr key={log._id}>
-                  <td className="py-2 px-4 border-b">{new Date(log.timestamp).toLocaleString()}</td>
-                  <td className="py-2 px-4 border-b">{log.userId}</td>
-                  <td className="py-2 px-4 border-b">{log.action}</td>
-                  <td className="py-2 px-4 border-b">{log.resourceType}</td>
-                  <td className="py-2 px-4 border-b">{log.resourceId || '-'}</td>
-                  <td className="py-2 px-4 border-b">
-                    {log.details ? (
-                      <pre className="text-xs bg-gray-100 p-1 rounded overflow-auto max-h-20">
-                        {JSON.stringify(log.details, null, 2)}
-                      </pre>
-                    ) : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          {/* Pagination or more advanced filtering/display could be added here */}
+  const { hasPermission } = useRBAC();
+
+  // Check if user has permission to view audit logs
+  if (!hasPermission('audit:read')) {
+    return (
+      <AdminLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <h2 className="text-xl font-semibold text-gray-600 mb-2">Access Denied</h2>
+            <p className="text-gray-500">You don&apos;t have permission to view audit logs.</p>
+          </div>
         </div>
-      )}
-    </div>
+      </AdminLayout>
+    );
+  }
+
+  return (
+    <AdminLayout>
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">📋 Audit Logs</h1>
+          <p className="text-gray-600">Monitor system activities and user actions</p>
+        </div>
+
+        {loading && (
+          <div className="bg-white p-6 rounded-lg shadow-sm border">
+            <p className="text-gray-600">Loading audit logs...</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="bg-red-50 p-6 rounded-lg border border-red-200">
+            <p className="text-red-600">Error: {error}</p>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <div className="bg-white rounded-lg shadow-sm border">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-semibold">Recent Activities</h2>
+              <p className="text-gray-600 text-sm mt-1">
+                {auditLogs.length} audit log{auditLogs.length !== 1 ? 's' : ''} found
+              </p>
+            </div>
+            
+            {auditLogs.length > 0 ? (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Timestamp</TableHead>
+                      <TableHead>User ID</TableHead>
+                      <TableHead>Action</TableHead>
+                      <TableHead>Resource Type</TableHead>
+                      <TableHead>Resource ID</TableHead>
+                      <TableHead>Details</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {auditLogs.map(log => (
+                      <TableRow key={log._id}>
+                        <TableCell className="font-mono text-sm">
+                          {new Date(log.timestamp).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{log.userId}</TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 bg-blue-100 text-blue-800 rounded-md text-sm">
+                            {log.action}
+                          </span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="px-2 py-1 bg-gray-100 text-gray-800 rounded-md text-sm">
+                            {log.resourceType}
+                          </span>
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{log.resourceId || '-'}</TableCell>
+                        <TableCell>
+                          {log.details ? (
+                            <details className="cursor-pointer">
+                              <summary className="text-blue-600 hover:text-blue-800 text-sm">
+                                View Details
+                              </summary>
+                              <pre className="text-xs bg-gray-50 p-2 rounded mt-2 overflow-auto max-h-32 max-w-xs">
+                                {JSON.stringify(log.details, null, 2)}
+                              </pre>
+                            </details>
+                          ) : (
+                            <span className="text-gray-400">-</span>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            ) : (
+              <div className="p-6 text-center">
+                <p className="text-gray-500">No audit logs found.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </AdminLayout>
   );
 }

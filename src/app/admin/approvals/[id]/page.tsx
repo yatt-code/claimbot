@@ -61,6 +61,10 @@ export default function AdminSubmissionDetailPage({ params }: SubmissionDetailPr
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'approved' }),
       });
 
       if (!response.ok) {
@@ -81,12 +85,14 @@ export default function AdminSubmissionDetailPage({ params }: SubmissionDetailPr
     if (!submissionDetails) return;
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "http://localhost:3000";
-    const endpoint = submissionDetails.type === 'Expense' ? `${baseUrl}/api/claims/${id}` : `${baseUrl}/api/overtime/${id}`;
     const loadingToast = toast.loading(`Rejecting ${submissionDetails.type} submission...`);
 
     try {
-      const response = await fetch(endpoint, {
-        method: 'PATCH',
+      // Use approve endpoint for consistency (both approve and reject)
+      const rejectEndpoint = submissionDetails.type === 'Expense' ? `${baseUrl}/api/claims/${id}/approve` : `${baseUrl}/api/overtime/${id}/approve`;
+      
+      const response = await fetch(rejectEndpoint, {
+        method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -169,12 +175,19 @@ export default function AdminSubmissionDetailPage({ params }: SubmissionDetailPr
           return;
         }
 
-        // Fetch user details for the submission
-        const userResponse = await fetch(`${baseUrl}/api/users/${submission.userId}`);
-        if (!userResponse.ok) {
-          throw new Error(`Failed to fetch user details: ${userResponse.statusText}`);
+        // Check if userId is populated (object) or just an ID (string)
+        let user: User;
+        if (typeof submission.userId === 'object' && submission.userId !== null) {
+          // If userId is populated with user data, use it directly
+          user = submission.userId as User;
+        } else {
+          // If userId is just an ID, fetch user details
+          const userResponse = await fetch(`${baseUrl}/api/users/${submission.userId}`);
+          if (!userResponse.ok) {
+            throw new Error(`Failed to fetch user details: ${userResponse.statusText}`);
+          }
+          user = await userResponse.json();
         }
-        const user: User = await userResponse.json();
 
         // Fetch attachments for the submission
         const attachmentsResponse = await fetch(`${baseUrl}/api/files?linkedToId=${submissionId}`);

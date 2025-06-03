@@ -352,4 +352,71 @@ Add a new TDL whenever you:
   - Loading states and error handling patterns
 - **Consequences**: Professional user experience with clear access boundaries, consistent security model across all components, but requires updating all existing admin pages to follow the new patterns.
 
+### [2025-06-03] Resolve Clerk-MongoDB Role Synchronization Issues
+- **Status**: Accepted
+- **Context**: Critical production issue where user roles stored in MongoDB were not synchronized with Clerk's `publicMetadata`, causing middleware and API route protection failures. Users with valid roles in database were getting "access denied" errors.
+- **Decision**: Implemented comprehensive role synchronization system:
+  - Created debug API endpoints (`/api/debug/check-clerk-user`, `/api/debug/sync-roles`) for troubleshooting
+  - Built role sync utilities to force-update Clerk `publicMetadata` from MongoDB roles
+  - Updated middleware to use `clerkClient().users.getUser()` instead of cached session claims
+  - Enhanced API route protection to fetch fresh user data from Clerk
+  - Added retry logic and fallback mechanisms for intermittent Clerk API failures
+- **Consequences**:
+  - **Benefits**: Resolved critical access control failures, improved system reliability, better error handling for network issues
+  - **Tradeoffs**: Additional API calls to Clerk for role verification, slightly increased latency for protected routes
+  - **Technical Impact**: All role-based access now works reliably, but requires maintaining sync between MongoDB and Clerk
+
+### [2025-06-03] Fix Next.js 15 Dynamic Route Parameter Handling
+- **Status**: Accepted
+- **Context**: Next.js 15 introduced breaking changes requiring `params` to be awaited in dynamic API routes. Existing code was causing "[object Object]" errors and 400 Bad Request responses.
+- **Decision**: Updated all dynamic API routes to properly handle async params:
+  - Modified `/api/users/[id]/route.ts` to await params before destructuring
+  - Fixed frontend logic to handle populated MongoDB ObjectIds vs string IDs
+  - Updated approval detail page to detect populated user objects and avoid unnecessary API calls
+  - Integrated new RBAC `protectApiRoute` utility for consistent authorization
+- **Consequences**:
+  - **Benefits**: Eliminated "[object Object]" errors, proper Next.js 15 compatibility, improved type safety
+  - **Tradeoffs**: Required updating multiple API routes and frontend components
+  - **Compatibility**: System now fully compatible with Next.js 15 conventions
+
+### [2025-06-03] Implement Professional Approval Workflow System
+- **Status**: Accepted
+- **Context**: Admin approval functionality was incomplete with missing API endpoints, broken approve/reject actions, and no UI for entering rejection remarks or comments.
+- **Decision**: Built comprehensive approval workflow system:
+  - Created dedicated approve endpoints (`/api/claims/[id]/approve`, `/api/overtime/[id]/approve`) supporting both approve and reject actions
+  - Redesigned `ActionButtons` component with expandable forms for rejection remarks and comments
+  - Implemented proper validation, error handling, and user feedback with toast notifications
+  - Added audit logging for all approval actions with remarks tracking
+  - Enhanced UI with color-coded sections and professional styling
+- **Consequences**:
+  - **Benefits**: Complete approval workflow, professional user experience, proper audit trail, clear rejection reasoning
+  - **Tradeoffs**: More complex UI state management, additional API endpoints to maintain
+  - **Business Impact**: Managers can now properly approve/reject submissions with documented reasoning, improving accountability
+
+### [2025-06-03] Enhance Middleware Reliability with Retry Logic
+- **Status**: Accepted
+- **Context**: Intermittent Clerk API failures were causing random "access denied" redirects for valid users, creating poor user experience and unreliable system behavior.
+- **Decision**: Enhanced middleware with robust error handling:
+  - Implemented exponential backoff retry logic (up to 2 retries) for network failures
+  - Added fallback mechanisms for critical admin routes when role verification fails
+  - Improved error logging and debugging capabilities
+  - Enhanced type safety for error handling without `any` types
+- **Consequences**:
+  - **Benefits**: More reliable access control, better user experience, reduced false access denials
+  - **Tradeoffs**: Slightly increased latency for failed requests, more complex error handling logic
+  - **Reliability Impact**: System now gracefully handles temporary network issues and Clerk API instability
+
+### [2025-06-03] Standardize Admin UI with Consistent Layout System
+- **Status**: Accepted
+- **Context**: Admin reports and audit-logs pages had inconsistent styling and layout compared to other admin sections, creating poor user experience and maintenance overhead.
+- **Decision**: Standardized all admin pages to use consistent `AdminLayout` pattern:
+  - Updated `/admin/reports` and `/admin/audit-logs` to use `AdminLayout` wrapper
+  - Implemented consistent permission checking with professional access denied screens
+  - Enhanced table styling with ShadCN components for better visual consistency
+  - Added proper loading states, error handling, and responsive design patterns
+- **Consequences**:
+  - **Benefits**: Consistent user experience across all admin sections, easier maintenance, professional appearance
+  - **Tradeoffs**: Required refactoring existing pages, slightly more complex component structure
+  - **UX Impact**: All admin functionality now follows the same design patterns and interaction models
+
 ---
