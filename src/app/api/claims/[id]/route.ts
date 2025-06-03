@@ -97,6 +97,24 @@ export async function GET(request: Request, context: { params: { id: string } })
     }
     // TODO: Implement manager specific view (direct reports)
 
+    // Calculate totalClaim if not present or if it's 0/null/undefined
+    const mileageRate = 0.5; // TODO: fetch from config if available
+    if (!claim.totalClaim || claim.totalClaim === 0) {
+      const calculatedTotal = ((claim.expenses?.mileage || 0) * mileageRate) +
+                             (claim.expenses?.toll || 0) +
+                             (claim.expenses?.petrol || 0) +
+                             (claim.expenses?.meal || 0) +
+                             (claim.expenses?.others || 0);
+      
+      // Create response with calculated total
+      const claimWithTotal = {
+        ...claim.toObject(),
+        totalClaim: calculatedTotal,
+        mileageRate: mileageRate
+      };
+      return NextResponse.json(claimWithTotal);
+    }
+
     return NextResponse.json(claim);
 
   } catch (error) {

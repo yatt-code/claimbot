@@ -85,8 +85,28 @@ export async function GET() {
         claims = [];
     }
 
+    // Calculate totalClaim for claims that don't have it or need recalculation
+    const mileageRate = 0.5; // TODO: fetch from config if available
+    const claimsWithCalculatedTotal = claims.map(claim => {
+      // Calculate total if not present or if it's 0/null/undefined
+      if (!claim.totalClaim || claim.totalClaim === 0) {
+        const calculatedTotal = ((claim.expenses?.mileage || 0) * mileageRate) +
+                               (claim.expenses?.toll || 0) +
+                               (claim.expenses?.petrol || 0) +
+                               (claim.expenses?.meal || 0) +
+                               (claim.expenses?.others || 0);
+        
+        // Create a plain object with calculated total
+        return {
+          ...claim.toObject(),
+          totalClaim: calculatedTotal,
+          mileageRate: mileageRate
+        };
+      }
+      return claim.toObject();
+    });
 
-    return NextResponse.json(claims);
+    return NextResponse.json(claimsWithCalculatedTotal);
 
   } catch (error) {
     console.error("Error fetching claims:", error);
