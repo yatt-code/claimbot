@@ -118,9 +118,7 @@ export default function SubmitOvertimePage() {
             render={({ field }) => (
               <FormItem className="grid gap-2">
                 <FormLabel>Date</FormLabel>
-                <FormControl>
-                  <DatePicker field={field} label="Pick a date" /> {/* Use DatePicker component */}
-                </FormControl>
+                <DatePicker field={field} label="Pick a date" /> {/* Use DatePicker component */}
                 <FormMessage />
               </FormItem>
             )}
@@ -132,9 +130,7 @@ export default function SubmitOvertimePage() {
             render={({ field }) => (
               <FormItem className="grid gap-2">
                 <FormLabel>Start Time</FormLabel>
-                <FormControl>
-                  <TimePicker field={field} label="Start Time" /> {/* Use TimePicker component */}
-                </FormControl>
+                <TimePicker field={field} label="Start Time" /> {/* Use TimePicker component */}
                 <FormMessage />
               </FormItem>
             )}
@@ -146,9 +142,7 @@ export default function SubmitOvertimePage() {
             render={({ field }) => (
               <FormItem className="grid gap-2">
                 <FormLabel>End Time</FormLabel>
-                <FormControl>
-                  <TimePicker field={field} label="End Time" /> {/* Use TimePicker component */}
-                </FormControl>
+                <TimePicker field={field} label="End Time" /> {/* Use TimePicker component */}
                 <FormMessage />
               </FormItem>
             )}

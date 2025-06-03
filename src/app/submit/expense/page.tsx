@@ -204,9 +204,7 @@ export default function SubmitExpensePage() {
             render={({ field }) => (
               <FormItem className="grid gap-2">
                 <FormLabel>Date</FormLabel>
-                <FormControl>
-                  <DatePicker field={field} label="Pick a date" />
-                </FormControl>
+                <DatePicker field={field} label="Pick a date" />
                 <FormMessage />
               </FormItem>
             )}

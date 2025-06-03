@@ -56,6 +56,7 @@ const isProtectedRoute = createRouteMatcher([
   '/submit(.*)',
   '/my-submissions(.*)',
   '/expense(.*)',
+  '/overtime(.*)',
   '/profile(.*)',
   '/manager(.*)', // Add manager routes for redirect pages
   '/api/claims(.*)',
