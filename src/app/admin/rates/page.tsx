@@ -1,7 +1,9 @@
 "use client";
 
+import AdminLayout from "@/components/AdminLayout";
+import { useRBAC } from "@/hooks/useRBAC";
 import React, { useState, useEffect } from 'react';
-import { toast } from 'react-hot-toast'; // Assuming react-hot-toast is used for notifications
+import { toast } from 'react-hot-toast';
 
 interface RateConfigCondition {
   dayType?: string;
@@ -20,11 +22,15 @@ interface RateConfig {
 }
 
 export default function AdminRateConfigurationPage() {
+  const rbac = useRBAC();
   const [rates, setRates] = useState<RateConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingRate, setEditingRate] = useState<RateConfig | null>(null);
   const [newRateValue, setNewRateValue] = useState<number | string>('');
+
+  // Check if user has permission to configure rates
+  const canConfigureRates = rbac.hasPermission('config:update');
 
   useEffect(() => {
     const fetchRates = async () => {
@@ -127,85 +133,131 @@ export default function AdminRateConfigurationPage() {
   };
 
   // Function to handle input change
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>, rate: RateConfig) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewRateValue(e.target.value);
   };
 
+  // If user doesn't have permission to configure rates, show access denied
+  if (!canConfigureRates) {
+    return (
+      <AdminLayout>
+        <div className="text-center py-8">
+          <div className="text-6xl mb-4">🚫</div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+          <p className="text-gray-600">
+            You don&apos;t have permission to configure system rates.
+          </p>
+        </div>
+      </AdminLayout>
+    );
+  }
+
   return (
-    <div className="container mx-auto py-8 px-4">
-      <h1 className="text-2xl font-bold mb-6">⚙️ Admin Rate Configuration</h1>
-      {loading && <p>Loading rates...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
-      {!loading && !error && (
-        <div className="bg-white rounded-lg shadow overflow-hidden">
-          <div className="p-6">
-            <h2 className="text-xl font-semibold mb-6">Current Rates</h2>
-            <div className="space-y-4">
-              {rates.map(rate => (
-                <div key={rate._id} className="border rounded-lg overflow-hidden">
-                  <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
-                    <div>
-                      <span className="font-medium capitalize text-gray-800">
-                        {rate.type.replace('_', ' ')}
-                      </span>
-                      {rate.condition?.dayType && (
-                        <span className="ml-2 text-sm text-gray-600">
-                          ({rate.condition.dayType})
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">⚙️ Rate Configuration</h1>
+          <p className="text-gray-600 mt-1">
+            Configure system rates for mileage and overtime calculations.
+          </p>
+        </div>
+
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-500">Loading rate configurations...</p>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-700">Error: {error}</p>
+          </div>
+        )}
+
+        {/* Rates Configuration */}
+        {!loading && !error && (
+          <div className="bg-white rounded-lg shadow border overflow-hidden">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold mb-6">Current Rates</h2>
+              <div className="space-y-4">
+                {rates.map(rate => (
+                  <div key={rate._id} className="border rounded-lg overflow-hidden">
+                    <div className="p-4 bg-gray-50 border-b flex justify-between items-center">
+                      <div>
+                        <span className="font-medium capitalize text-gray-800">
+                          {rate.type.replace('_', ' ')}
                         </span>
+                        {rate.condition?.dayType && (
+                          <span className="ml-2 text-sm text-gray-600">
+                            ({rate.condition.dayType})
+                          </span>
+                        )}
+                      </div>
+                      <div className="font-mono text-gray-700">
+                        {getRateDisplay(rate)}
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      {editingRate?._id === rate._id ? (
+                        <div className="flex items-center space-x-4">
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {rate.type === 'mileage' ? 'Rate per mile ($)' : 'Multiplier'}
+                            </label>
+                            <input
+                              type="number"
+                              value={getEditValue(rate)}
+                              onChange={handleInputChange}
+                              className="border rounded px-3 py-2 w-full max-w-xs"
+                              step={rate.type === 'mileage' ? '0.01' : '0.1'}
+                              min="0"
+                            />
+                          </div>
+                          <div className="flex space-x-2 mt-6">
+                            <button
+                              onClick={() => handleSaveRate(rate._id)}
+                              className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={handleCancelEdit}
+                              className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end">
+                          <button
+                            onClick={() => handleEditClick(rate)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
+                          >
+                            Edit
+                          </button>
+                        </div>
                       )}
                     </div>
-                    <div className="font-mono text-gray-700">
-                      {getRateDisplay(rate)}
-                    </div>
                   </div>
-                  <div className="p-4">
-                    {editingRate?._id === rate._id ? (
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-1">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
-                            {rate.type === 'mileage' ? 'Rate per mile ($)' : 'Multiplier'}
-                          </label>
-                          <input
-                            type="number"
-                            value={getEditValue(rate)}
-                            onChange={(e) => handleInputChange(e, rate)}
-                            className="border rounded px-3 py-2 w-full max-w-xs"
-                            step={rate.type === 'mileage' ? '0.01' : '0.1'}
-                            min="0"
-                          />
-                        </div>
-                        <div className="flex space-x-2 mt-6">
-                          <button
-                            onClick={() => handleSaveRate(rate._id)}
-                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={handleCancelEdit}
-                            className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300 transition-colors"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex justify-end">
-                        <button
-                          onClick={() => handleEditClick(rate)}
-                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors"
-                        >
-                          Edit
-                        </button>
-                      </div>
-                    )}
-                  </div>
+                ))}
+              </div>
+
+              {rates.length === 0 && (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-4xl mb-2">⚙️</div>
+                  <h3 className="text-lg font-medium text-gray-900 mb-1">No rates configured</h3>
+                  <p className="text-gray-500">System rates will need to be configured.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </AdminLayout>
   );
 }

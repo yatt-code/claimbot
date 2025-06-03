@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import SubmissionTable from "@/components/SubmissionTable";
 import { useUser } from "@clerk/nextjs";
+import { useRBAC } from "@/hooks/useRBAC";
 import { useState, useEffect } from "react";
 
 // Define the API response types
@@ -35,9 +36,13 @@ interface Submission {
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
+  const rbac = useRBAC();
   const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Check if user has admin or manager permissions
+  const hasAdminAccess = rbac.hasAnyRole(['manager', 'admin', 'superadmin']);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -150,6 +155,13 @@ export default function DashboardPage() {
             📄 View All Submissions
           </Button>
         </Link>
+        {hasAdminAccess && (
+          <Link href="/admin">
+            <Button className="w-full md:w-auto bg-purple-600 hover:bg-purple-700">
+              🏗️ Admin Panel
+            </Button>
+          </Link>
+        )}
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

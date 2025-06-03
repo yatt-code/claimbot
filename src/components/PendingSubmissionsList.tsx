@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -6,7 +7,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"; // Assuming table components are needed
+} from "@/components/ui/table";
 
 // Define the PendingItem type based on the companion spec
 export interface PendingItem {
@@ -46,10 +47,13 @@ const PendingSubmissionsList: React.FC<PendingSubmissionsListProps> = ({ submiss
               <TableCell>{submission.type}</TableCell>
               <TableCell>{submission.date}</TableCell>
               <TableCell>
-                {/* TODO: Implement Review button and link */}
-                <button className="text-blue-600 hover:underline">
-                  🔍 Review
-                </button>
+                <Link
+                  href={`/admin/approvals/${submission.id}`}
+                  className="text-blue-600 hover:underline inline-flex items-center space-x-1"
+                >
+                  <span>🔍</span>
+                  <span>Review</span>
+                </Link>
               </TableCell>
             </TableRow>
           ))

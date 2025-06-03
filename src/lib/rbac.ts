@@ -34,7 +34,9 @@ export const ROLE_PERMISSIONS = {
     'overtime:approve',
     'overtime:read:team',
     'users:read:team',
-    'reports:read:team'
+    'reports:read:team',
+    'analytics:read:basic',
+    'admin:access:approvals'
   ],
   finance: [
     'claims:read:all',
@@ -42,18 +44,27 @@ export const ROLE_PERMISSIONS = {
     'reports:read:all',
     'reports:export',
     'claims:update:status',
-    'overtime:update:status'
+    'overtime:update:status',
+    'analytics:read:financial'
   ],
   admin: [
     'users:create',
     'users:read:all',
     'users:update:all',
     'users:delete',
+    'config:read',
+    'config:update',
+    'config:create',
     'rates:create',
     'rates:update',
     'rates:delete',
     'audit-logs:read',
-    'system:config'
+    'system:config',
+    'admin:access',
+    'analytics:read:full',
+    'admin:access:users',
+    'admin:access:rates',
+    'admin:access:audit-logs'
   ],
   superadmin: [
     'roles:manage',
@@ -172,33 +183,76 @@ export interface RouteConfig {
 
 // Define protected routes with their requirements
 export const PROTECTED_ROUTES: RouteConfig[] = [
-  // Admin routes
-  { 
-    path: '/admin', 
+  // Unified Admin Dashboard - accessible to managers and above
+  {
+    path: '/admin',
+    requiredRoles: ['manager', 'admin', 'superadmin'],
+    requiredPermissions: ['claims:approve'], // Base permission for admin access
+    allowHierarchy: true
+  },
+  
+  // Admin User Management - admin only
+  {
+    path: '/admin/users',
     requiredRoles: ['admin', 'superadmin'],
     requiredPermissions: ['users:read:all'],
     allowHierarchy: true
   },
-  { 
-    path: '/api/admin', 
+  
+  // Admin Rate Configuration - admin only
+  {
+    path: '/admin/rates',
+    requiredRoles: ['admin', 'superadmin'],
+    requiredPermissions: ['config:update'],
+    allowHierarchy: true
+  },
+  
+  // Admin Audit Logs - admin only
+  {
+    path: '/admin/audit-logs',
+    requiredRoles: ['admin', 'superadmin'],
+    requiredPermissions: ['audit-logs:read'],
+    allowHierarchy: true
+  },
+  
+  // Admin Analytics - accessible to managers and above
+  {
+    path: '/admin/analytics',
+    requiredRoles: ['manager', 'admin', 'superadmin'],
+    requiredPermissions: ['analytics:read:basic'],
+    allowHierarchy: true
+  },
+  
+  // Admin Approvals - accessible to managers and above
+  {
+    path: '/admin/approvals',
+    requiredRoles: ['manager', 'admin', 'superadmin'],
+    requiredPermissions: ['claims:approve'],
+    allowHierarchy: true
+  },
+  
+  // Admin Reports - accessible to managers and above
+  {
+    path: '/admin/reports',
+    requiredRoles: ['manager', 'admin', 'superadmin'],
+    requiredPermissions: ['reports:read:team'],
+    allowHierarchy: true
+  },
+  
+  // API Admin routes
+  {
+    path: '/api/admin',
     requiredRoles: ['admin', 'superadmin'],
     requiredPermissions: ['users:read:all'],
     isApiRoute: true,
     allowHierarchy: true
   },
   
-  // Manager routes
-  { 
-    path: '/manager', 
+  // Legacy Manager routes (for redirect pages)
+  {
+    path: '/manager',
     requiredRoles: ['manager', 'admin', 'superadmin'],
     requiredPermissions: ['claims:approve'],
-    allowHierarchy: true
-  },
-  { 
-    path: '/api/manager', 
-    requiredRoles: ['manager', 'admin', 'superadmin'],
-    requiredPermissions: ['claims:approve'],
-    isApiRoute: true,
     allowHierarchy: true
   },
   

@@ -318,4 +318,38 @@ Add a new TDL whenever you:
   - **Tradeoffs**: Additional dependency on `react-hot-toast`, slightly more complex error handling flow
   - **UX Impact**: Users now see clean, professional error messages with appropriate visual feedback instead of technical error URLs
 
+### [2025-06-03] Unified Adaptive Admin Dashboard Architecture
+- **Status**: Accepted
+- **Context**: Originally had separate `/admin` and `/manager` interfaces with different layouts, navigation, and functionality. This created code duplication, inconsistent user experience, and made it difficult for users with multiple roles (like superadmins) to access all features efficiently.
+- **Decision**: Implemented a unified adaptive dashboard system under `/admin` with:
+  - **Unified AdminLayout**: Single layout component with role-based navigation filtering
+  - **Permission-based components**: All admin pages now use consistent RBAC checking with graceful access denied screens
+  - **Role-adaptive functionality**: Same routes show different data/actions based on user permissions (e.g., analytics shows basic vs full data)
+  - **Legacy route migration**: `/manager/*` routes now redirect to `/admin/*` equivalents
+  - **Granular permission system**: Added specific permissions for admin sections (`config:update`, `analytics:read:basic`, etc.)
+- **Consequences**:
+  - **Benefits**: Single entry point for all admin tasks, consistent UI/UX, reduced code duplication, better role scalability, unified navigation
+  - **Tradeoffs**: More complex permission checking logic, required migration of existing manager functionality, larger initial refactoring effort
+  - **Architecture Impact**: All administrative interfaces now follow the same pattern, making future admin features easier to implement and maintain
+
+### [2025-06-03] Enhanced RBAC with Analytics Permissions
+- **Status**: Accepted
+- **Context**: Added new analytics dashboard with different data access levels based on user roles (managers see basic metrics, admins see full analytics, finance sees financial data).
+- **Decision**: Extended RBAC system with analytics-specific permissions:
+  - `analytics:read:basic` for managers (team metrics, approval rates)
+  - `analytics:read:full` for admins (comprehensive insights, trends, categories)
+  - `analytics:read:financial` for finance role (monetary data access)
+  - Enhanced route protection for `/admin/analytics` endpoint
+- **Consequences**: Enables role-appropriate data visualization while maintaining security boundaries. Analytics dashboard adapts to show relevant information without exposing sensitive data to unauthorized users.
+
+### [2025-06-03] Component-Level RBAC Integration
+- **Status**: Accepted
+- **Context**: Previous pages had minimal permission checking and showed generic error messages. Needed consistent, professional access control across all admin components.
+- **Decision**: Standardized all admin pages to use:
+  - `useRBAC()` hook for permission checking
+  - Consistent access denied screens with professional messaging
+  - Permission-based UI element rendering (buttons, sections, navigation items)
+  - Loading states and error handling patterns
+- **Consequences**: Professional user experience with clear access boundaries, consistent security model across all components, but requires updating all existing admin pages to follow the new patterns.
+
 ---
