@@ -1,7 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { UserRole } from "@/models/User";
 import User from "@/models/User";
-import { connectDB } from "./mongodb";
+import connectDB from "./mongodb";
 
 /**
  * Sync user roles from database to Clerk's public metadata
@@ -16,8 +16,11 @@ export async function syncUserRolesToClerk(userId: string) {
       throw new Error('User not found in database');
     }
 
+    // Get Clerk client instance
+    const client = await clerkClient();
+    
     // Update Clerk's public metadata with the latest roles
-    await clerkClient.users.updateUser(userId, {
+    await client.users.updateUser(userId, {
       publicMetadata: {
         ...user.publicMetadata,
         roles: user.roles || []
@@ -36,15 +39,19 @@ export async function syncUserRolesToClerk(userId: string) {
  * Can be used in API routes or server components
  */
 export async function getCurrentUser() {
-  const { userId } = auth();
+  const authResult = await auth();
+  const { userId } = authResult;
   
   if (!userId) {
     return null;
   }
   
   try {
+    // Get Clerk client instance
+    const client = await clerkClient();
+    
     // Get user from Clerk
-    const clerkUser = await clerkClient.users.getUser(userId);
+    const clerkUser = await client.users.getUser(userId);
     
     // Get roles from public metadata
     const roles = (clerkUser.publicMetadata.roles || []) as UserRole[];
@@ -57,7 +64,7 @@ export async function getCurrentUser() {
       roles,
       isSuperadmin: roles.includes('superadmin'),
       hasRole: (role: UserRole) => roles.includes(role) || roles.includes('superadmin'),
-      hasAnyRole: (requiredRoles: UserRole[]) => 
+      hasAnyRole: (requiredRoles: UserRole[]) =>
         requiredRoles.some(role => roles.includes(role)) || roles.includes('superadmin')
     };
   } catch (error) {

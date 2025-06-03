@@ -1,3 +1,10 @@
+// Load environment variables from .env.local
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env.local file
+config({ path: resolve(process.cwd(), '.env.local') });
+
 import { withDB } from '@/lib/server/db';
 import User, { UserRole } from '@/models/User';
 import { syncUserRolesToClerk } from '@/lib/clerk';
@@ -22,7 +29,6 @@ async function migrateToRolesArray() {
       
       console.log(`👥 Found ${users.length} users to process`);
       
-      let updatedCount = 0;
       let processedCount = 0;
       const results = {
         migrated: 0,
@@ -89,7 +95,6 @@ async function migrateToRolesArray() {
             
             userResult.newRoles = [...user.roles];
             userResult.status = 'migrated';
-            updatedCount++;
             results.migrated++;
           }
           

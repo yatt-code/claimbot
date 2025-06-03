@@ -3,9 +3,16 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import SubmissionTable from "@/components/SubmissionTable";
-import { useUser } from "@clerk/nextjs";
+import { useUser, SignOutButton } from "@clerk/nextjs";
 import { useRBAC } from "@/hooks/useRBAC";
 import { useState, useEffect } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 // Define the API response types
 interface ClaimResponse {
@@ -135,9 +142,72 @@ export default function DashboardPage() {
 
   return (
     <div className="container mx-auto py-4 px-4 md:py-8 md:px-6">
-      <h1 className="text-xl md:text-2xl font-bold mb-4">
-        Hello, {userName} 👋 Today&apos;s Date: {currentDate}
-      </h1>
+      {/* Header with Profile */}
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-xl md:text-2xl font-bold mb-1">
+            Hello, {userName} 👋
+          </h1>
+          <p className="text-gray-600">Today&apos;s Date: {currentDate}</p>
+        </div>
+        
+        {/* User Profile Dropdown */}
+        <div className="flex items-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="flex items-center space-x-3 h-auto p-2">
+                <div className="text-right hidden md:block">
+                  <p className="text-sm font-medium text-gray-900">{userName}</p>
+                  <p className="text-xs text-gray-500">{user.primaryEmailAddress?.emailAddress}</p>
+                </div>
+                
+                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                  <span className="text-white text-sm font-medium">
+                    {userName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            
+            <DropdownMenuContent align="end" className="w-56">
+              {/* User Info Header */}
+              <div className="px-2 py-1.5 text-sm">
+                <p className="font-medium text-gray-900">{userName}</p>
+                <p className="text-xs text-gray-500">{user.primaryEmailAddress?.emailAddress}</p>
+              </div>
+              
+              <DropdownMenuSeparator />
+              
+              {/* Profile Link */}
+              <DropdownMenuItem asChild>
+                <Link href="/auth/profile" className="cursor-pointer">
+                  👤 My Profile
+                </Link>
+              </DropdownMenuItem>
+              
+              {/* Admin Console (if user has access) */}
+              {hasAdminAccess && (
+                <DropdownMenuItem asChild>
+                  <Link href="/admin" className="cursor-pointer">
+                    🏗️ Admin Console
+                  </Link>
+                </DropdownMenuItem>
+              )}
+              
+              <DropdownMenuSeparator />
+              
+              {/* Sign Out */}
+              <DropdownMenuItem asChild>
+                <SignOutButton>
+                  <button className="w-full text-left cursor-pointer">
+                    🚪 Sign Out
+                  </button>
+                </SignOutButton>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
       <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-8">
         <Link href="/submit/expense">
@@ -155,13 +225,6 @@ export default function DashboardPage() {
             📄 View All Submissions
           </Button>
         </Link>
-        {hasAdminAccess && (
-          <Link href="/admin">
-            <Button className="w-full md:w-auto bg-purple-600 hover:bg-purple-700">
-              🏗️ Admin Panel
-            </Button>
-          </Link>
-        )}
       </div>
 
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">

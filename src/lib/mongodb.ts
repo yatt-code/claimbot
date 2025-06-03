@@ -1,11 +1,15 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI;
+function getMongDBURI(): string {
+  const MONGODB_URI = process.env.MONGODB_URI;
 
-if (!MONGODB_URI) {
-  throw new Error(
-    'Please define the MONGODB_URI environment variable inside .env.local'
-  );
+  if (!MONGODB_URI) {
+    throw new Error(
+      'Please define the MONGODB_URI environment variable inside .env.local'
+    );
+  }
+  
+  return MONGODB_URI;
 }
 
 /**
@@ -43,7 +47,7 @@ async function dbConnect() {
       // Remove explicit TLS options to let Mongoose/driver handle Atlas SRV URI defaults
     };
 
-    global.mongoose.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+    global.mongoose.promise = mongoose.connect(getMongDBURI(), opts).then((mongoose) => {
       return mongoose;
     });
   }

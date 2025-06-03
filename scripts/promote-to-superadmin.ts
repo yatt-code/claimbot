@@ -1,3 +1,10 @@
+// Load environment variables from .env.local
+import { config } from 'dotenv';
+import { resolve } from 'path';
+
+// Load .env.local file
+config({ path: resolve(process.cwd(), '.env.local') });
+
 import { withDB } from '@/lib/server/db';
 import User, { UserRole } from '@/models/User';
 import { syncUserRolesToClerk } from '@/lib/clerk';
@@ -6,23 +13,28 @@ import { Command } from 'commander';
 /**
  * Promotes a user to superadmin role
  */
-async function promoteToSuperadmin(email: string): Promise<{ success: boolean; message: string }> {
+async function promoteToSuperadmin(identifier: string): Promise<{ success: boolean; message: string }> {
   return withDB(async () => {
     try {
-      console.log(`🔍 Looking up user with email: ${email}`);
+      // Check if identifier looks like a Clerk User ID (starts with "user_")
+      const isClerkId = identifier.startsWith('user_');
+      const searchField = isClerkId ? 'clerkId' : 'email';
+      const searchValue = isClerkId ? identifier : { $regex: new RegExp(`^${identifier}$`, 'i') };
       
-      // Find the user by email (case-insensitive search)
-      const user = await User.findOne({ 
-        email: { $regex: new RegExp(`^${email}$`, 'i') } 
+      console.log(`🔍 Looking up user by ${searchField}: ${identifier}`);
+      
+      // Find the user by clerkId or email
+      const user = await User.findOne({
+        [searchField]: searchValue
       });
       
       if (!user) {
-        const message = `❌ User with email "${email}" not found`;
+        const message = `❌ User with ${searchField} "${identifier}" not found`;
         console.error(message);
         return { success: false, message };
       }
       
-      console.log(`✅ Found user: ${user.name || 'Unnamed User'} (${user.email})`);
+      console.log(`✅ Found user: ${user.name || 'Unnamed User'} (${user.email}) [Clerk ID: ${user.clerkId}]`);
       console.log(`📋 Current roles: ${user.roles?.join(', ') || 'None'}`);
       
       // Initialize roles array if it doesn't exist
@@ -54,7 +66,7 @@ async function promoteToSuperadmin(email: string): Promise<{ success: boolean; m
         console.log('You may need to manually update Clerk or run the sync again later.');
       }
       
-      const successMessage = `\n🎉 Successfully promoted ${user.email} to superadmin!`;
+      const successMessage = `\n🎉 Successfully promoted ${user.email} (${user.clerkId}) to superadmin!`;
       console.log(successMessage);
       
       return { 
@@ -82,9 +94,9 @@ program
   .name('promote-to-superadmin')
   .description('Promote a user to superadmin role')
   .version('1.0.0')
-  .argument('<email>', 'Email of the user to promote')
-  .action(async (email: string) => {
-    const result = await promoteToSuperadmin(email);
+  .argument('<identifier>', 'Clerk User ID (user_xxxxx) or email address of the user to promote')
+  .action(async (identifier: string) => {
+    const result = await promoteToSuperadmin(identifier);
     process.exit(result.success ? 0 : 1);
   });
 
