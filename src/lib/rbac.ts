@@ -64,7 +64,8 @@ export const ROLE_PERMISSIONS = {
     'analytics:read:full',
     'admin:access:users',
     'admin:access:rates',
-    'admin:access:audit-logs'
+    'admin:access:audit-logs',
+    'admin:access:trip-templates' // New permission for admin trip templates
   ],
   superadmin: [
     'roles:manage',
@@ -212,6 +213,13 @@ export const PROTECTED_ROUTES: RouteConfig[] = [
     path: '/admin/audit-logs',
     requiredRoles: ['admin', 'superadmin'],
     requiredPermissions: ['audit-logs:read'],
+    allowHierarchy: true
+  },
+  // Admin Trip Templates - admin only
+  {
+    path: '/admin/trip-templates',
+    requiredRoles: ['admin', 'superadmin'],
+    requiredPermissions: ['admin:access:trip-templates'],
     allowHierarchy: true
   },
   

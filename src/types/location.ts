@@ -1,11 +1,3 @@
-export enum TripMode {
-  OFFICE_TO_DEST = 'OFFICE_TO_DEST',
-  OFFICE_TO_DEST_AND_BACK = 'OFFICE_TO_DEST_AND_BACK',
-  CUSTOM_ORIGIN_TO_DEST = 'CUSTOM_ORIGIN_TO_DEST',
-  CUSTOM_ORIGIN_TO_DEST_AND_BACK = 'CUSTOM_ORIGIN_TO_DEST_AND_BACK',
-  CUSTOM_A_TO_B = 'CUSTOM_A_TO_B',
-  CUSTOM_A_TO_B_AND_BACK = 'CUSTOM_A_TO_B_AND_BACK',
-}
 
 export interface LocationCoordinates {
   lat: number;
@@ -42,9 +34,9 @@ export interface Location {
 }
 
 export interface TripCalculation {
-  tripMode: TripMode;
   origin?: LocationCoordinates | string;
   destination: LocationCoordinates | string;
+  roundTrip: boolean; // Replaced TripMode with a boolean flag
   distanceKm: number;
   estimatedCost?: number;
 }

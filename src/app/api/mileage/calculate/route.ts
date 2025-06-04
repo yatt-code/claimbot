@@ -2,13 +2,18 @@ import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/server/db";
 import User from "@/models/User";
-import { calculateMileage, validateTripModeRequirements } from "@/lib/mileage-calculator";
-import { TripMode } from "@/types/location";
+import { calculateMileage, validateTripRequirements } from "@/lib/mileage-calculator";
 import { z } from "zod";
 
 // Validation schema for mileage calculation request
 const CalculateMileageSchema = z.object({
-  tripMode: z.nativeEnum(TripMode, { errorMap: () => ({ message: "Invalid trip mode" }) }),
+  origin: z.union([
+    z.string().min(1, "Origin address is required"),
+    z.object({
+      lat: z.number().min(-90).max(90),
+      lng: z.number().min(-180).max(180)
+    })
+  ]),
   destination: z.union([
     z.string().min(1, "Destination address is required"),
     z.object({
@@ -16,13 +21,7 @@ const CalculateMileageSchema = z.object({
       lng: z.number().min(-180).max(180)
     })
   ]),
-  origin: z.union([
-    z.string().min(1),
-    z.object({
-      lat: z.number().min(-90).max(90),
-      lng: z.number().min(-180).max(180)
-    })
-  ]).optional()
+  isRoundTrip: z.boolean()
 });
 
 export async function POST(request: Request) {
@@ -53,10 +52,10 @@ export async function POST(request: Request) {
       );
     }
 
-    const { tripMode, destination, origin } = validationResult.data;
+    const { origin, destination, isRoundTrip } = validationResult.data;
 
-    // Validate trip mode requirements
-    const tripValidation = validateTripModeRequirements(tripMode, destination, origin);
+    // Validate trip requirements
+    const tripValidation = validateTripRequirements(origin, destination);
     if (!tripValidation.isValid) {
       return NextResponse.json(
         { error: tripValidation.error },
@@ -65,16 +64,15 @@ export async function POST(request: Request) {
     }
 
     // Calculate mileage
-    const distanceKm = await calculateMileage(tripMode, destination, origin);
+    const distanceKm = await calculateMileage(origin, destination, isRoundTrip);
 
     // Check for distance warnings (over 100km)
     const hasWarning = distanceKm > 100;
-    const warningMessage = hasWarning 
+    const warningMessage = hasWarning
       ? `Distance of ${distanceKm}km exceeds 100km. Please verify this is correct.`
       : undefined;
 
     return NextResponse.json({
-      tripMode,
       distanceKm: Math.round(distanceKm * 100) / 100, // Round to 2 decimal places
       hasWarning,
       warningMessage,

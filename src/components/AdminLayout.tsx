@@ -49,6 +49,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       permission: 'locations:read:all', // Assuming a permission for location management
     },
     {
+      href: '/admin/trip-templates',
+      label: 'Trip Templates',
+      icon: '🗺️', // Using a map emoji for trip templates
+      permission: 'admin:access:trip-templates', // New permission for admin trip templates
+    },
+    {
       href: '/admin/rates',
       label: 'Rates',
       icon: '💰',

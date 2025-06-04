@@ -1,8 +1,7 @@
 import { Types } from 'mongoose';
 import { auth } from '@clerk/nextjs/server';
 import { dbConnect } from '@/lib/server/db';
-import { TripMode } from '@/types/location';
-import { calculateMileage, validateTripModeRequirements } from '@/lib/mileage-calculator';
+import { calculateMileage, validateTripRequirements } from '@/lib/mileage-calculator';
 
 // Mock Clerk auth
 jest.mock('@clerk/nextjs/server', () => ({
@@ -136,10 +135,11 @@ describe('Mileage Calculator', () => {
   });
 
   describe('calculateMileage', () => {
-    it('should calculate one-way distance for OFFICE_TO_DEST', async () => {
+    it('should calculate one-way distance', async () => {
       const result = await calculateMileage(
-        TripMode.OFFICE_TO_DEST,
-        'Test Destination'
+        { lat: 3.139, lng: 101.6869, name: 'Test Office' }, // Origin
+        'Test Destination', // Destination
+        false // isRoundTrip
       );
 
       expect(result).toBe(15.5);
@@ -149,26 +149,21 @@ describe('Mileage Calculator', () => {
       );
     });
 
-    it('should calculate round-trip distance for OFFICE_TO_DEST_AND_BACK', async () => {
+    it('should calculate round-trip distance', async () => {
       const result = await calculateMileage(
-        TripMode.OFFICE_TO_DEST_AND_BACK,
-        'Test Destination'
+        { lat: 3.139, lng: 101.6869, name: 'Test Office' }, // Origin
+        'Test Destination', // Destination
+        true // isRoundTrip
       );
 
       expect(result).toBe(31); // 15.5 * 2
     });
 
-    it('should require origin for custom modes', async () => {
-      await expect(
-        calculateMileage(TripMode.CUSTOM_A_TO_B, 'Test Destination')
-      ).rejects.toThrow('Origin is required for CUSTOM_A_TO_B trip mode');
-    });
-
-    it('should calculate custom trip correctly', async () => {
+    it('should calculate custom one-way trip correctly', async () => {
       const result = await calculateMileage(
-        TripMode.CUSTOM_A_TO_B,
-        'Test Destination',
-        'Custom Origin'
+        'Custom Origin', // Origin
+        'Test Destination', // Destination
+        false // isRoundTrip
       );
 
       expect(result).toBe(15.5);
@@ -177,32 +172,46 @@ describe('Mileage Calculator', () => {
         'Test Destination'
       );
     });
-  });
 
-  describe('validateTripModeRequirements', () => {
-    it('should validate destination requirement', () => {
-      const result = validateTripModeRequirements(
-        TripMode.OFFICE_TO_DEST,
-        null
+    it('should calculate custom round-trip correctly', async () => {
+      const result = await calculateMileage(
+        'Custom Origin', // Origin
+        'Test Destination', // Destination
+        true // isRoundTrip
       );
 
-      expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Destination is required for all trip modes');
+      expect(result).toBe(31); // 15.5 * 2
+      expect(getDistanceInKM).toHaveBeenCalledWith(
+        'Custom Origin',
+        'Test Destination'
+      );
     });
+  });
 
-    it('should validate origin requirement for custom modes', () => {
-      const result = validateTripModeRequirements(
-        TripMode.CUSTOM_A_TO_B,
+  describe('validateTripRequirements', () => {
+    it('should validate origin requirement', () => {
+      const result = validateTripRequirements(
+        null, // Missing origin
         'Test Destination'
       );
 
       expect(result.isValid).toBe(false);
-      expect(result.error).toBe('Origin is required for CUSTOM_A_TO_B trip mode');
+      expect(result.error).toBe('Origin is required');
+    });
+
+    it('should validate destination requirement', () => {
+      const result = validateTripRequirements(
+        'Test Origin',
+        null // Missing destination
+      );
+
+      expect(result.isValid).toBe(false);
+      expect(result.error).toBe('Destination is required');
     });
 
     it('should pass validation for valid inputs', () => {
-      const result = validateTripModeRequirements(
-        TripMode.OFFICE_TO_DEST,
+      const result = validateTripRequirements(
+        'Test Origin',
         'Test Destination'
       );
 

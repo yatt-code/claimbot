@@ -16,12 +16,16 @@ import {
 import {
   Select,
   SelectContent,
+  SelectGroup, // Import SelectGroup
   SelectItem,
+  SelectLabel, // Import SelectLabel
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LocationTemplate, TripMode } from "@/types/location";
+import { LocationTemplate } from "@/types/location";
 import SavedTripTemplate, { ISavedTripTemplate } from "@/models/SavedTripTemplate"; // Import SavedTripTemplate model
+import { IAdminTripTemplate } from "@/models/AdminTripTemplate"; // Import AdminTripTemplate model
+import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import {
   Dialog,
   DialogContent,
@@ -47,9 +51,7 @@ const expenseFormSchema = z.object({
   date: z.string().min(1, { message: "Date is required." }),
   project: z.string().optional(),
   description: z.string().optional(),
-  tripMode: z.nativeEnum(TripMode, {
-    errorMap: () => ({ message: "Please select a trip mode." }),
-  }).optional(),
+  roundTrip: z.boolean().default(false), // New field for round trip
   origin: z.string().optional(),
   destination: z.string().optional(),
   saveTemplateLabel: z.string().optional(), // New field for saving templates
@@ -79,22 +81,24 @@ const expenseFormSchema = z.object({
   ),
   attachments: z.any().optional(), // File handling
 }).superRefine((data, ctx) => {
-  if (data.tripMode && data.tripMode !== TripMode.CUSTOM_A_TO_B && data.tripMode !== TripMode.CUSTOM_A_TO_B_AND_BACK && !data.destination) {
+  // If it's a one-way trip and destination is missing
+  if (!data.roundTrip && !data.destination) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Destination is required for selected trip mode.",
+      message: "Destination is required for one-way trip.",
       path: ['destination'],
     });
   }
-  if ((data.tripMode === TripMode.CUSTOM_A_TO_B || data.tripMode === TripMode.CUSTOM_A_TO_B_AND_BACK) && (!data.origin || !data.destination)) {
+  // If it's a round trip and origin or destination is missing
+  if (data.roundTrip && (!data.origin || !data.destination)) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Origin and Destination are required for custom trip mode.",
+      message: "Origin and Destination are required for round trip.",
       path: ['origin'],
     });
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Origin and Destination are required for custom trip mode.",
+      message: "Origin and Destination are required for round trip.",
       path: ['destination'],
     });
   }
@@ -112,7 +116,7 @@ export default function SubmitExpensePage() {
       date: "",
       project: "",
       description: "",
-      tripMode: undefined,
+      roundTrip: false, // New field
       origin: "",
       destination: "",
       calculatedMileage: undefined,
@@ -129,12 +133,13 @@ export default function SubmitExpensePage() {
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false); // State for submission loading
   const [locationTemplates, setLocationTemplates] = useState<LocationTemplate[]>([]);
-  const [savedTripTemplates, setSavedTripTemplates] = useState<ISavedTripTemplate[]>([]); // State for saved trip templates
+  const [savedTripTemplates, setSavedTripTemplates] = useState<ISavedTripTemplate[]>([]); // State for saved personal trip templates
+  const [adminTripTemplates, setAdminTripTemplates] = useState<IAdminTripTemplate[]>([]); // State for admin trip templates
   const [isCalculatingMileage, setIsCalculatingMileage] = useState(false);
   const [mileageCalculationFeedback, setMileageCalculationFeedback] = useState<string | null>(null);
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false); // State for save template dialog
 
-  const tripMode = form.watch("tripMode");
+  const roundTrip = form.watch("roundTrip"); // Watch roundTrip instead of tripMode
   const origin = form.watch("origin");
   const destination = form.watch("destination");
 
@@ -171,17 +176,41 @@ export default function SubmitExpensePage() {
     fetchSavedTripTemplates();
   }, [fetchSavedTripTemplates]);
 
+  // Fetch admin trip templates
+  const fetchAdminTripTemplates = useCallback(async () => {
+    try {
+      const response = await fetch('/api/admin/trip-templates');
+      if (!response.ok) {
+        throw new Error('Failed to fetch admin trip templates.');
+      }
+      const data = await response.json();
+      setAdminTripTemplates(data);
+    } catch (error) {
+      console.error("Failed to fetch admin trip templates:", error);
+      toast.error("Failed to load admin trip templates.");
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchAdminTripTemplates();
+  }, [fetchAdminTripTemplates]);
+
   // Mileage calculation effect
   useEffect(() => {
     const calculateMileage = async () => {
-      if (tripMode && debouncedOrigin && debouncedDestination) {
+      // Only calculate if both origin and destination are provided
+      if (debouncedOrigin && debouncedDestination) {
         setIsCalculatingMileage(true);
         setMileageCalculationFeedback(null);
         try {
           const response = await fetch('/api/mileage/calculate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ origin: debouncedOrigin, destination: debouncedDestination, tripMode }),
+            body: JSON.stringify({
+              origin: debouncedOrigin,
+              destination: debouncedDestination,
+              isRoundTrip: roundTrip, // Send isRoundTrip boolean
+            }),
           });
           if (!response.ok) {
             const errorData = await response.json();
@@ -213,7 +242,7 @@ export default function SubmitExpensePage() {
     };
 
     calculateMileage();
-  }, [tripMode, debouncedOrigin, debouncedDestination, form]);
+  }, [roundTrip, debouncedOrigin, debouncedDestination, form]); // Update dependencies
 
   // Prefill form if editing a draft
   useEffect(() => {
@@ -226,7 +255,7 @@ export default function SubmitExpensePage() {
             date: data.date ? data.date.slice(0, 10) : "",
             project: data.project || "",
             description: data.description || "",
-            tripMode: data.tripMode || undefined,
+            roundTrip: data.roundTrip ?? false, // Use roundTrip
             origin: data.origin || "",
             destination: data.destination || "",
             calculatedMileage: data.calculatedMileage ?? undefined,
@@ -258,7 +287,7 @@ export default function SubmitExpensePage() {
         date: values.date,
         project: values.project,
         description: values.description,
-        tripMode: values.tripMode,
+        roundTrip: values.roundTrip, // Use roundTrip
         origin: values.origin,
         destination: values.destination,
         calculatedMileage: values.calculatedMileage,
@@ -336,14 +365,22 @@ export default function SubmitExpensePage() {
   }
 
   // Handle loading a saved trip template
-  const handleLoadTemplate = (templateId: string) => {
-    const template = savedTripTemplates.find(t => t._id.toString() === templateId);
+  const handleLoadTemplate = (value: string) => {
+    const [type, templateId] = value.split('-');
+    let template: ISavedTripTemplate | IAdminTripTemplate | undefined;
+
+    if (type === 'personal') {
+      template = savedTripTemplates.find(t => t._id?.toString() === templateId);
+    } else if (type === 'admin') {
+      template = adminTripTemplates.find(t => t._id?.toString() === templateId);
+    }
+
     if (template) {
       form.reset({
         ...form.getValues(), // Keep existing values for other fields
-        tripMode: template.roundTrip ? TripMode.CUSTOM_ORIGIN_TO_DEST_AND_BACK : TripMode.CUSTOM_A_TO_B,
-        origin: template.origin.address, // Use address instead of name
-        destination: template.destination.address, // Use address instead of name
+        origin: template.origin.address,
+        destination: template.destination.address,
+        roundTrip: template.roundTrip,
         calculatedMileage: undefined, // Recalculate mileage
         mileage: undefined, // Recalculate mileage
       });
@@ -356,10 +393,10 @@ export default function SubmitExpensePage() {
     const label = form.getValues("saveTemplateLabel");
     const origin = form.getValues("origin");
     const destination = form.getValues("destination");
-    const tripMode = form.getValues("tripMode");
+    const roundTrip = form.getValues("roundTrip"); // Get roundTrip
 
-    if (!label || !origin || !destination || !tripMode) {
-      toast.error("Please fill in template name, origin, destination, and trip mode to save as template.");
+    if (!label || !origin || !destination) { // tripMode is no longer a direct input
+      toast.error("Please fill in template name, origin, and destination to save as template.");
       return;
     }
 
@@ -387,7 +424,7 @@ export default function SubmitExpensePage() {
       const newTemplate = {
         origin: originLocation,
         destination: destinationLocation,
-        roundTrip: tripMode === TripMode.CUSTOM_ORIGIN_TO_DEST_AND_BACK || tripMode === TripMode.CUSTOM_A_TO_B_AND_BACK,
+        roundTrip: roundTrip, // Use the form's roundTrip value
         label,
       };
 
@@ -425,17 +462,34 @@ export default function SubmitExpensePage() {
             <SelectValue placeholder="Load Saved Trip" />
           </SelectTrigger>
           <SelectContent>
-            {savedTripTemplates.map((template) => {
-              const templateId = template._id?.toString() || '';
-              return (
-                <SelectItem 
-                  key={templateId} 
-                  value={templateId}
-                >
-                  {template.label}
-                </SelectItem>
-              );
-            })}
+            <SelectGroup>
+              <SelectLabel>Personal Templates</SelectLabel>
+              {savedTripTemplates.map((template) => {
+                const templateId = template._id?.toString() || '';
+                return (
+                  <SelectItem
+                    key={`personal-${templateId}`}
+                    value={`personal-${templateId}`}
+                  >
+                    {template.label}
+                  </SelectItem>
+                );
+              })}
+            </SelectGroup>
+            <SelectGroup>
+              <SelectLabel>Admin Templates</SelectLabel>
+              {adminTripTemplates.map((template) => {
+                const templateId = template._id?.toString() || '';
+                return (
+                  <SelectItem
+                    key={`admin-${templateId}`}
+                    value={`admin-${templateId}`}
+                  >
+                    {template.label}
+                  </SelectItem>
+                );
+              })}
+            </SelectGroup>
           </SelectContent>
         </Select>
 
@@ -514,84 +568,83 @@ export default function SubmitExpensePage() {
             )}
           />
 
+          {/* Origin Field - Always visible, but can be pre-filled by office location */}
           <FormField
             control={form.control}
-            name="tripMode"
+            name="origin"
             render={({ field }) => (
               <FormItem className="grid gap-2">
-                <FormLabel>Trip Mode</FormLabel>
-                <Select onValueChange={(value) => {
-                  field.onChange(value);
-                  form.setValue("origin", "");
-                  form.setValue("destination", "");
-                  form.setValue("calculatedMileage", undefined);
-                  form.setValue("mileage", undefined);
-                  setMileageCalculationFeedback(null);
-                }} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select trip mode" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {Object.values(TripMode).map((mode) => (
-                      <SelectItem key={mode} value={mode}>
-                        {mode.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, l => l.toUpperCase())}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <FormLabel>Origin</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g., Office, or a custom address"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      // Clear mileage calculation feedback when origin changes
+                      form.setValue("calculatedMileage", undefined);
+                      form.setValue("mileage", undefined);
+                      setMileageCalculationFeedback(null);
+                    }}
+                  />
+                </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          {(tripMode === TripMode.CUSTOM_A_TO_B || tripMode === TripMode.CUSTOM_A_TO_B_AND_BACK) && (
-            <FormField
-              control={form.control}
-              name="origin"
-              render={({ field }) => (
-                <FormItem className="grid gap-2">
-                  <FormLabel>Origin</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+          {/* Destination Field - Always visible */}
+          <FormField
+            control={form.control}
+            name="destination"
+            render={({ field }) => (
+              <FormItem className="grid gap-2">
+                <FormLabel>Destination</FormLabel>
+                <FormControl>
+                  <Input
+                    {...field}
+                    placeholder="e.g., KPKT, or a custom address"
+                    onChange={(e) => {
+                      field.onChange(e);
+                      // Clear mileage calculation feedback when destination changes
+                      form.setValue("calculatedMileage", undefined);
+                      form.setValue("mileage", undefined);
+                      setMileageCalculationFeedback(null);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-          {tripMode && (
-            <FormField
-              control={form.control}
-              name="destination"
-              render={({ field }) => (
-                <FormItem className="grid gap-2">
-                  <FormLabel>Destination</FormLabel>
-                  <FormControl>
-                    {(tripMode === TripMode.CUSTOM_A_TO_B || tripMode === TripMode.CUSTOM_A_TO_B_AND_BACK) ? (
-                      <Input {...field} />
-                    ) : (
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select a destination" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {locationTemplates.map((loc) => (
-                            <SelectItem key={loc._id} value={loc.address}>
-                              {loc.name} ({loc.address})
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </FormControl>
+          {/* Round Trip Checkbox */}
+          <FormField
+            control={form.control}
+            name="roundTrip"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4 md:col-span-2">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={(checked: boolean) => { // Explicitly type 'checked' as boolean
+                      field.onChange(checked);
+                      // Clear mileage calculation feedback when roundTrip changes
+                      form.setValue("calculatedMileage", undefined);
+                      form.setValue("mileage", undefined);
+                      setMileageCalculationFeedback(null);
+                    }}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>
+                    Return Trip (Origin to Destination and Back)
+                  </FormLabel>
                   <FormMessage />
-                </FormItem>
-              )}
-            />
-          )}
+                </div>
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}
@@ -603,17 +656,26 @@ export default function SubmitExpensePage() {
                   <Input
                     type="number"
                     {...field}
-                    readOnly={true} // Make mileage field read-only
-                    disabled={isCalculatingMileage}
+                    readOnly // Make mileage field read-only
+                    disabled={true} // Always disabled for user interaction
+                    className="bg-gray-100 text-gray-500 cursor-not-allowed" // Greyed out appearance
                     onChange={(e) => {
+                      // Allow form to update internally, but prevent user input
                       const value = e.target.value === '' ? undefined : Number(e.target.value);
                       field.onChange(value);
                     }}
                     value={field.value === null || field.value === undefined ? '' : field.value}
                   />
                 </FormControl>
-                {isCalculatingMileage && <p className="text-sm text-gray-500">Calculating mileage...</p>}
-                {mileageCalculationFeedback && <p className="text-sm text-gray-500">{mileageCalculationFeedback}</p>}
+                {isCalculatingMileage && <p className="text-sm text-blue-600">Calculating mileage...</p>}
+                {mileageCalculationFeedback && (
+                  <p className="text-sm text-gray-600">
+                    {mileageCalculationFeedback}
+                    {mileageCalculationFeedback.includes("Google Maps") && (
+                      <span className="ml-1 text-xs text-gray-500">(Calculated via Google Maps API)</span>
+                    )}
+                  </p>
+                )}
                 <FormMessage />
               </FormItem>
             )}
