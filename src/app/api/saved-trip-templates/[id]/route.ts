@@ -5,27 +5,50 @@ import { connectDB } from '@/lib/server/db';
 import { auditLog } from '@/lib/logger';
 
 // DELETE /api/saved-trip-templates/[id]
-export async function DELETE(req: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: { id: string } }
+) {
   try {
     await connectDB();
-    const { userId } = await auth();
+    
+    // Get authentication info with debug logging
+    const authResult = await auth();
+    const { userId } = authResult;
     const { id } = params;
 
+    console.log('Auth result in DELETE /api/saved-trip-templates/[id]:', { 
+      userId,
+      templateId: id,
+      sessionId: authResult.sessionId 
+    });
+
     if (!userId) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      console.error('No user ID found in session');
+      return NextResponse.json({ 
+        message: 'Unauthorized - No user session found' 
+      }, { status: 401 });
     }
 
     if (!id) {
-      return NextResponse.json({ message: 'Template ID is required' }, { status: 400 });
+      console.error('No template ID provided');
+      return NextResponse.json({ 
+        message: 'Template ID is required' 
+      }, { status: 400 });
     }
 
-    const template = await SavedTripTemplate.findOne({ where: { id, userId } });
+    console.log(`Looking up template ${id} for user ${userId}`);
+    const template = await SavedTripTemplate.findOne({ _id: id, userId });
 
     if (!template) {
-      return NextResponse.json({ message: 'Template not found or unauthorized' }, { status: 404 });
+      console.error(`Template ${id} not found for user ${userId}`);
+      return NextResponse.json({ 
+        message: 'Template not found or unauthorized' 
+      }, { status: 404 });
     }
 
-    await template.destroy();
+    console.log(`Deleting template: ${template.label} (${id})`);
+    await SavedTripTemplate.deleteOne({ _id: id, userId });
 
     await auditLog({
       userId,
@@ -35,9 +58,24 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
       details: `Deleted saved trip template: ${template.label}`,
     });
 
-    return NextResponse.json({ message: 'Template deleted successfully' }, { status: 200 });
+    console.log(`Successfully deleted template ${id}`);
+    return NextResponse.json({ 
+      message: 'Template deleted successfully' 
+    }, { status: 200 });
+    
   } catch (error) {
-    console.error('Error deleting saved trip template:', error);
-    return NextResponse.json({ message: 'Error deleting saved trip template' }, { status: 500 });
+    console.error('Error in DELETE /api/saved-trip-templates/[id]:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      params,
+      userId: (error as any)?.userId,
+    });
+    
+    return NextResponse.json({ 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? 
+        (error instanceof Error ? error.message : 'Unknown error') : 
+        undefined
+    }, { status: 500 });
   }
 }

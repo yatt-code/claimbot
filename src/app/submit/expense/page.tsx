@@ -337,13 +337,13 @@ export default function SubmitExpensePage() {
 
   // Handle loading a saved trip template
   const handleLoadTemplate = (templateId: string) => {
-    const template = savedTripTemplates.find(t => t._id === templateId);
+    const template = savedTripTemplates.find(t => t._id.toString() === templateId);
     if (template) {
       form.reset({
         ...form.getValues(), // Keep existing values for other fields
-        tripMode: template.roundTrip ? TripMode.CUSTOM_ORIGIN_TO_DEST_AND_BACK : TripMode.CUSTOM_A_TO_B, // Adjust based on your TripMode enum
-        origin: template.origin.name,
-        destination: template.destination.name,
+        tripMode: template.roundTrip ? TripMode.CUSTOM_ORIGIN_TO_DEST_AND_BACK : TripMode.CUSTOM_A_TO_B,
+        origin: template.origin.address, // Use address instead of name
+        destination: template.destination.address, // Use address instead of name
         calculatedMileage: undefined, // Recalculate mileage
         mileage: undefined, // Recalculate mileage
       });
@@ -425,11 +425,17 @@ export default function SubmitExpensePage() {
             <SelectValue placeholder="Load Saved Trip" />
           </SelectTrigger>
           <SelectContent>
-            {savedTripTemplates.map((template) => (
-              <SelectItem key={template._id.toString()} value={template._id.toString()}>
-                {template.label}
-              </SelectItem>
-            ))}
+            {savedTripTemplates.map((template) => {
+              const templateId = template._id?.toString() || '';
+              return (
+                <SelectItem 
+                  key={templateId} 
+                  value={templateId}
+                >
+                  {template.label}
+                </SelectItem>
+              );
+            })}
           </SelectContent>
         </Select>
 

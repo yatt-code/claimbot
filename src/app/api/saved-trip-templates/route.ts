@@ -7,19 +7,39 @@ import { auditLog } from '@/lib/logger';
 // GET /api/saved-trip-templates
 export async function GET(req: NextRequest) {
   try {
+    // Connect to database first
     await connectDB();
-    const { userId } = await auth();
+    
+    // Get authentication info
+    const authResult = await auth();
+    const { userId } = authResult;
 
     if (!userId) {
-      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({
+        message: 'Unauthorized - No user session found'
+      }, { status: 401 });
     }
 
     const templates = await SavedTripTemplate.find({ userId }).sort({ createdAt: -1 });
 
-    return NextResponse.json(templates);
+    // Convert MongoDB documents to plain objects and ensure _id is a string
+    const response = templates.map(template => ({
+      ...template.toObject(),
+      _id: template._id.toString(),
+    }));
+
+    return NextResponse.json(response);
   } catch (error) {
-    console.error('Error fetching saved trip templates:', error);
-    return NextResponse.json({ message: 'Error fetching saved trip templates' }, { status: 500 });
+    console.error('Error in GET /api/saved-trip-templates:', {
+      error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    return NextResponse.json({ 
+      message: 'Internal server error',
+      error: process.env.NODE_ENV === 'development' ? 
+        (error instanceof Error ? error.message : 'Unknown error') : 
+        undefined
+    }, { status: 500 });
   }
 }
 
@@ -27,7 +47,15 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     await connectDB();
-    const { userId } = await auth();
+    
+    const authResult = await auth();
+    const { userId } = authResult;
+    
+    console.log('Auth result in POST /api/saved-trip-templates:', { 
+      userId,
+      sessionId: authResult.sessionId,
+      orgId: authResult.orgId 
+    });
 
     if (!userId) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });

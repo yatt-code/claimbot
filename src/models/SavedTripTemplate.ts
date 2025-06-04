@@ -2,7 +2,8 @@ import mongoose, { Schema, Document } from 'mongoose';
 import { Location } from '../types/location';
 
 export interface ISavedTripTemplate extends Document {
-  userId: mongoose.Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
+  userId: string; // Changed from ObjectId to string to match Clerk's user ID format
   origin: Location;
   destination: Location;
   roundTrip: boolean;
@@ -12,14 +13,14 @@ export interface ISavedTripTemplate extends Document {
 }
 
 const SavedTripTemplateSchema: Schema = new Schema({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: String, required: true }, // Changed to String type
   origin: {
-    name: { type: String, required: true },
+    address: { type: String, required: true }, // Changed from 'name' to 'address' to match Location type
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
   },
   destination: {
-    name: { type: String, required: true },
+    address: { type: String, required: true }, // Changed from 'name' to 'address' to match Location type
     lat: { type: Number, required: true },
     lng: { type: Number, required: true },
   },
