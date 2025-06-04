@@ -253,6 +253,57 @@ This document tracks known bugs, errors, and pending implementation tasks.
 - **Affected File**: `src/app/submit/expense/page.tsx`
 - **Fixed**: 2025-06-04
 
+#### Location System Integration Complete
+- **Status**: Resolved
+- **Priority**: High
+- **Tags**: `#location`, `#mileage`, `#google-maps`, `#completed`
+- **Description**: Location and mileage calculation system implementation has been completed with all specified features from the adhoc specifications.
+- **Completed Features**:
+  - Google Maps Directions API integration for accurate distance calculation
+  - Admin-controlled [`LocationTemplate`](src/models/LocationTemplate.ts:1) system for common destinations
+  - [`AdminTripTemplate`](src/models/AdminTripTemplate.ts:1) for organization-wide trip templates
+  - [`SavedTripTemplate`](src/models/SavedTripTemplate.ts:1) for user-specific saved routes
+  - Simplified trip mode system with return trip checkbox
+  - Read-only mileage field with automatic calculation
+  - Enhanced expense form UX with trip selection and validation
+- **Affected Files**:
+  - `src/models/LocationTemplate.ts` - Location template model
+  - `src/models/AdminTripTemplate.ts` - Admin trip template model
+  - `src/models/SavedTripTemplate.ts` - User trip template model
+  - `src/app/api/location-templates/` - Location template APIs
+  - `src/app/api/admin/trip-templates/` - Admin trip template APIs
+  - `src/app/api/saved-trip-templates/` - User trip template APIs
+  - `src/app/api/mileage/calculate/route.ts` - Google Maps integration
+  - `src/app/submit/expense/page.tsx` - Enhanced expense form
+  - `src/lib/google-maps.ts` - Google Maps utility functions
+  - `src/lib/mileage-calculator.ts` - Mileage calculation logic
+- **Resolved**: 2025-06-05
+
 ---
 
-_Document Version: 1.12 • Last updated: 2025-06-04 by Code Mode_
+## Future Enhancements
+
+#### Advanced Location Features
+- **Status**: Open
+- **Priority**: Low
+- **Tags**: `#location`, `#enhancement`, `#future`
+- **Description**: Potential future enhancements for the location system mentioned in specifications:
+  - **Toll estimation integration**: Integrate toll costs based on route selection
+  - **Route policy validation**: Enforce business rules (e.g., staff can't travel > 50km without approval)
+  - **Offline mode support**: Cache common routes for use when Google Maps API is unavailable
+  - **Multi-stop trip support**: Handle complex trips with multiple destinations
+  - **Historical route tracking**: Analytics on most frequently used routes for optimization
+
+#### Google Maps API Optimization
+- **Status**: Open
+- **Priority**: Medium
+- **Tags**: `#performance`, `#api`, `#cost-optimization`
+- **Description**: Optimization opportunities for Google Maps API usage:
+  - **Distance matrix API**: Batch multiple distance calculations to reduce API calls
+  - **Caching strategy**: Implement Redis or database caching for frequently calculated routes
+  - **Fallback mechanisms**: Implement graceful degradation when API limits are reached
+  - **Cost monitoring**: Add usage tracking and alerts for API cost management
+
+---
+
+_Document Version: 1.13 • Last updated: 2025-06-05 by Code Mode_

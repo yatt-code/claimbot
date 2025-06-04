@@ -29,6 +29,7 @@ This project aims to develop an internal system that **digitizes and streamlines
 - ✅ **Export functionality** for monthly summaries (Excel/CSV format)
 - ✅ **User and role management** system
 - ✅ **Comprehensive audit logging** for all system actions
+- ✅ **Location and mileage calculation system** with Google Maps integration
 
 ### Out of Scope (MVP)
 - ❌ Integration with external payroll systems
@@ -55,6 +56,16 @@ This project aims to develop an internal system that **digitizes and streamlines
 **Rate Structure:**
 - Default mileage rate: **RM 0.50/km** (admin configurable)
 
+**Location and Mileage System:**
+- **Google Maps API integration** for accurate mileage calculation using real-world distances
+- **Admin-controlled destination templates** ([`LocationTemplate`](src/models/LocationTemplate.ts:1)) with predefined coordinates
+- **Trip mode system** supporting various travel patterns:
+  - Office-to-destination (one-way and return trips)
+  - Custom origin routes with flexible destinations
+  - Saved trip templates for frequently used routes
+- **Automatic mileage calculation** with read-only field for staff (prevents manual override)
+- **Enhanced UX** with trip mode selection and visual feedback on calculated distances
+
 **Documentation Requirements:**
 - Receipts **mandatory** for: toll payments, petrol, meals, and miscellaneous expenses
 - Each claim must be associated with a specific project or department
@@ -63,6 +74,13 @@ This project aims to develop an internal system that **digitizes and streamlines
 - Claims must be submitted within **7 days** of expense occurrence
 - Claims are editable until submission
 - Claims become **locked** after approval
+
+**Location System Validation Rules:**
+- Mileage field is read-only for staff users and auto-calculated from Google Maps API
+- Trip mode selection determines required fields (office modes require destination only, custom modes require origin and destination)
+- Mileage exceeding 100km triggers soft warning message for review
+- Admins may override mileage calculations via role-based permissions
+- All location and trip data validated using [`react-hook-form`](src/app/submit/expense/page.tsx:1) and [Zod schemas](src/app/submit/expense/page.tsx:1)
 
 ### 4.2 Overtime Calculations
 
@@ -194,4 +212,4 @@ Staff Submission → Manager Review → [Optional] Finance Review → Final Appr
 
 ---
 
-_Document Version: 1.2 • Last updated: 2025-05-31 by Code Mode_
+_Document Version: 1.3 • Last updated: 2025-06-05 by Code Mode_

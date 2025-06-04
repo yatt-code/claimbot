@@ -28,7 +28,7 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 
 ### Database
 - MongoDB Atlas
-- Collections: `users`, `claims`, `overtime`, `rates_config`, `files`, `audit_logs`
+- Collections: `users`, `claims`, `overtime`, `rates_config`, `files`, `audit_logs`, `location_templates`, `admin_trip_templates`, `saved_trip_templates`
 
 ---
 
@@ -73,6 +73,22 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
   },
   mileageRate: 0.5,
   totalClaim: 40.20,
+  // Location and trip data
+  tripMode: "OFFICE_TO_DEST", // TripMode enum
+  origin: {
+    name: "Main Office",
+    address: "123 Business St",
+    lat: 3.139,
+    lng: 101.6869
+  },
+  destination: {
+    name: "KPKT",
+    address: "456 Government Ave",
+    lat: 3.158,
+    lng: 101.711
+  },
+  returnTrip: false,
+  calculatedDistance: 20.5, // km from Google Maps API
   attachments: [ObjectId],
   status: "draft", // or "submitted", "approved", "rejected", "paid"
   submittedAt: ISODate,
@@ -162,6 +178,74 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 }
 ```
 
+### 3.7 Location Templates Collection
+
+```javascript
+{
+  _id: ObjectId,
+  name: "KPKT",
+  address: "Level 1-7, No. 51, Persiaran Perdana, Presint 4, 62574 Putrajaya",
+  lat: 3.1583,
+  lng: 101.7111,
+  createdAt: ISODate,
+  updatedAt: ISODate
+}
+```
+
+### 3.8 Admin Trip Templates Collection
+
+```javascript
+{
+  _id: ObjectId,
+  name: "Office to KPKT Return",
+  description: "Standard office to KPKT with return trip",
+  origin: {
+    name: "Main Office",
+    address: "123 Business Street",
+    lat: 3.139,
+    lng: 101.6869
+  },
+  destination: {
+    name: "KPKT",
+    address: "Level 1-7, No. 51, Persiaran Perdana, Presint 4, 62574 Putrajaya",
+    lat: 3.1583,
+    lng: 101.7111
+  },
+  returnTrip: true,
+  estimatedDistance: 41.2, // km (calculated during template creation)
+  isActive: true,
+  createdBy: ObjectId,
+  createdAt: ISODate,
+  updatedAt: ISODate
+}
+```
+
+### 3.9 Saved Trip Templates Collection
+
+```javascript
+{
+  _id: ObjectId,
+  userId: ObjectId,
+  name: "My Regular Client Visit",
+  origin: {
+    name: "Home Office",
+    address: "789 Residential Ave",
+    lat: 3.145,
+    lng: 101.695
+  },
+  destination: {
+    name: "Client Site",
+    address: "456 Corporate Blvd",
+    lat: 3.155,
+    lng: 101.715
+  },
+  returnTrip: false,
+  estimatedDistance: 15.3, // km
+  createdAt: ISODate,
+  updatedAt: ISODate
+}
+```
+
 ---
 
 ## 4. API Endpoints Summary
@@ -195,6 +279,27 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 ### Rates Configuration
 - `GET /config/rates`
 - `POST /config/rates`
+
+### Location Templates
+- `GET /api/location-templates` — Get all admin-defined location templates
+- `POST /api/location-templates` — Create new location template (admin only)
+- `PATCH /api/location-templates/:id` — Update location template (admin only)
+- `DELETE /api/location-templates/:id` — Delete location template (admin only)
+
+### Admin Trip Templates
+- `GET /api/admin/trip-templates` — Get all global trip templates
+- `POST /api/admin/trip-templates` — Create new admin trip template (admin only)
+- `PATCH /api/admin/trip-templates/:id` — Update admin trip template (admin only)
+- `DELETE /api/admin/trip-templates/:id` — Delete admin trip template (admin only)
+
+### Saved Trip Templates
+- `GET /api/saved-trip-templates` — Get user's personal saved trip templates
+- `POST /api/saved-trip-templates` — Create new saved trip template for current user
+- `PATCH /api/saved-trip-templates/:id` — Update user's saved trip template
+- `DELETE /api/saved-trip-templates/:id` — Delete user's saved trip template
+
+### Mileage Calculation
+- `POST /api/mileage/calculate` — Calculate distance using Google Maps Directions API
 
 ### Files
 - `POST /upload`
@@ -232,7 +337,15 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 ─────────────────────────────
 [Date]   [Project]
 [Description Textarea]
-Mileage: [__] km   Petrol: [__]
+
+🗺️ Trip Information
+Trip Mode: [Office to Destination ▼]
+Destination: [Select Template ▼] or [Custom Address]
+□ Return Trip
+Estimated Distance: 15.6 km (via Google Maps) [Read-only]
+
+💰 Expenses
+Mileage: [7.80] (auto-calculated)   Petrol: [__]
 Toll: [__]     Meal: [__]  Others: [__]
 📎 Upload receipt
 [ Save Draft ] [ Submit ]
@@ -277,19 +390,28 @@ Justification [____________]
 - Overtime rate is calculated from `salary / 173 * multiplier`
 - Duplicate submissions blocked within same day range
 - Attachments optional but encouraged
+- **Location System Validation:**
+  - Mileage automatically calculated using Google Maps Directions API
+  - Trip mode determines required fields (office vs custom origin/destination)
+  - Distance calculations cached to reduce API calls
+  - Validation warnings for trips exceeding 100km
+  - Admin override capabilities for mileage adjustments
 
 ---
 
 ## 9. Database Index Strategy
 
-| Collection     | Index                                      |
-|----------------|-------------------------------------------|
-| users          | email, role, department                   |
-| claims         | userId, date, status                      |
-| overtime       | userId, date, status                      |
-| files          | linkedTo.documentId                       |
-| audit_logs     | userId, timestamp                         |
-| rates_config   | type, effectiveDate, condition.designation|
+| Collection             | Index                                      |
+|------------------------|-------------------------------------------|
+| users                  | email, role, department                   |
+| claims                 | userId, date, status, tripMode           |
+| overtime               | userId, date, status                      |
+| files                  | linkedTo.documentId                       |
+| audit_logs             | userId, timestamp                         |
+| rates_config           | type, effectiveDate, condition.designation|
+| location_templates     | name, lat, lng                            |
+| admin_trip_templates   | isActive, estimatedDistance               |
+| saved_trip_templates   | userId, estimatedDistance                 |
 
 ---
 
@@ -325,4 +447,4 @@ Justification [____________]
 
 ---
 
-_Document Version: 1.0 • Last updated: 2025-05-27 by Aiyad_
+_Document Version: 1.1 • Last updated: 2025-06-05 by Code Mode_

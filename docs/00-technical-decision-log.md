@@ -420,3 +420,72 @@ Add a new TDL whenever you:
   - **UX Impact**: All admin functionality now follows the same design patterns and interaction models
 
 ---
+
+## Development Phase: 6 - Location System Implementation
+
+### [2025-06-05] Google Maps Directions API Integration Choice
+- **Status**: Accepted
+- **Context**: Needed accurate, real-world distance calculation for mileage claims instead of straight-line calculations that don't account for actual road routes, traffic patterns, or geographic obstacles.
+- **Decision**: Implemented Google Maps Directions API integration via [`/api/mileage/calculate`](src/app/api/mileage/calculate/route.ts:1) endpoint:
+  - Uses Google's road network data for precise distance calculations
+  - Supports both coordinate pairs and address strings as input
+  - Caches distance calculations to minimize API costs
+  - Provides fallback handling for API failures
+- **Consequences**:
+  - **Benefits**: Highly accurate mileage calculations, industry-standard mapping data, reliable distance estimation
+  - **Tradeoffs**: External API dependency, ongoing costs per calculation, requires API key management
+  - **Business Impact**: Ensures fair and accurate mileage reimbursements based on actual travel distances
+
+### [2025-06-05] Trip Mode Architecture Design
+- **Status**: Accepted
+- **Context**: Original complex `TripMode` enum system (6 modes) was confusing users and creating UX friction. Business analysis showed most trips fall into simple patterns.
+- **Decision**: Simplified to intuitive trip mode system:
+  - **Default Mode**: Office-to-destination with optional return trip checkbox
+  - **Custom Mode**: Custom origin-to-destination with optional return trip
+  - Replaced confusing enum values with clear, user-friendly labels
+  - Streamlined form logic with conditional field rendering
+- **Consequences**:
+  - **Benefits**: Much clearer user experience, reduced form complexity, easier to understand trip patterns
+  - **Tradeoffs**: Less granular trip type tracking, required refactoring existing trip logic
+  - **UX Impact**: Users can now easily understand and select appropriate trip options without confusion
+
+### [2025-06-05] LocationTemplate vs Custom Destination Approach
+- **Status**: Accepted
+- **Context**: Needed balance between admin control (consistent destinations) and user flexibility (custom locations) for expense claim locations.
+- **Decision**: Implemented hybrid [`LocationTemplate`](src/models/LocationTemplate.ts:1) system:
+  - Admin-controlled templates with predefined coordinates for common destinations
+  - User ability to enter custom addresses when templates don't meet needs
+  - Template dropdown with search/filter capabilities
+  - Custom address geocoding via Google Maps API
+- **Consequences**:
+  - **Benefits**: Consistency for common locations, flexibility for unique trips, reduced data entry errors
+  - **Tradeoffs**: More complex UI with template selection logic, admin maintenance overhead for templates
+  - **Operational Impact**: Admins can standardize frequent destinations while users retain flexibility
+
+### [2025-06-05] Mileage Calculation Automation Decision
+- **Status**: Accepted
+- **Context**: Manual mileage entry was prone to errors, inconsistencies, and potential fraud. Business required accurate, verifiable distance calculations.
+- **Decision**: Implemented read-only mileage field with automatic calculation:
+  - Mileage field locked for staff users (admin override available)
+  - Real-time calculation display with "Estimated distance: X km (via Google Maps)" feedback
+  - Clear visual indicators (disabled styling) to show field is auto-calculated
+  - Integration with trip mode selection for dynamic recalculation
+- **Consequences**:
+  - **Benefits**: Eliminates manual errors, ensures consistency, provides audit trail for calculations
+  - **Tradeoffs**: Reduced user control, dependency on Google Maps API availability
+  - **Compliance Impact**: Automated calculations provide verifiable audit trail for expense justification
+
+### [2025-06-05] Admin vs User-Controlled Destination Management
+- **Status**: Accepted
+- **Context**: Needed to balance administrative control over common destinations with user autonomy for unique travel requirements.
+- **Decision**: Implemented tiered destination management system:
+  - **Admin Level**: [`AdminTripTemplate`](src/models/AdminTripTemplate.ts:1) for organization-wide common routes
+  - **User Level**: [`SavedTripTemplate`](src/models/SavedTripTemplate.ts:1) for personal frequently-used routes
+  - **Global Templates**: Available to all users via `/admin/trip-templates` management
+  - **Personal Templates**: User-specific via `/api/saved-trip-templates` endpoints
+- **Consequences**:
+  - **Benefits**: Standardization for common business travel, personalization for individual needs, reduced duplicate data entry
+  - **Tradeoffs**: More complex template management UI, additional database collections to maintain
+  - **Scalability Impact**: System can grow with organization needs while maintaining user productivity
+
+---

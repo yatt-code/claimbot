@@ -26,6 +26,7 @@ Welcome to the ClaimBot documentation center. This hub provides organized access
 |----------|-------------|----------|
 | **[Technical Architecture](06-technical-architecture.md)** | Comprehensive system architecture and design patterns | Developers, Architects |
 | **[Deployment Guide](07-deployment-guide.md)** | Production deployment, Docker, CI/CD, monitoring | DevOps, System Admins |
+| **[Google Maps Integration](08-google-maps-integration-guide.md)** | Complete Google Maps API setup and integration guide | Developers, DevOps |
 | **[API Documentation](swagger.yaml)** | Complete REST API specification (OpenAPI 3.0) | Developers, Integrators |
 | **[Technical Decision Log](00-technical-decision-log.md)** | Architecture decisions and rationale | Developers, Architects |
 | **[Debug & Issues List](00-debug-list.md)** | Known issues, bugs, and TODO items | Developers, QA |
@@ -53,6 +54,7 @@ Welcome to the ClaimBot documentation center. This hub provides organized access
 - **Contributing**: [Contributing Guide](../CONTRIBUTING.md) → Development workflow and standards
 - **API Reference**: [Swagger Documentation](swagger.yaml) → Complete API specification
 - **Architecture**: [Technical Architecture](06-technical-architecture.md) → Comprehensive system design
+- **Google Maps Setup**: [Google Maps Integration](08-google-maps-integration-guide.md) → Location system API configuration
 - **Technical Decisions**: [Decision Log](00-technical-decision-log.md) → Why we chose specific technologies
 
 ### **🚀 For DevOps Engineers**
@@ -73,6 +75,7 @@ Welcome to the ClaimBot documentation center. This hub provides organized access
 - ✅ **Development Plan**: Phased approach with timelines
 - ✅ **Technical Architecture**: Comprehensive system design and patterns
 - ✅ **Deployment Guide**: Production deployment and operations
+- ✅ **Google Maps Integration**: Complete API setup and integration guide
 - ✅ **API Documentation**: OpenAPI 3.0 specification
 - ✅ **Technical Decisions**: Architecture rationale log
 - ✅ **Issue Tracking**: Current bugs and TODO items
@@ -159,6 +162,10 @@ graph TB
 - `POST /api/config/rates` - Create rate configuration
 - `GET /api/audit-logs` - View system audit logs
 - `POST /api/upload` - Upload file attachments
+
+### **Location & Mileage**
+- `POST /api/mileage/calculate` - Calculate distance between locations
+- `GET /api/mileage/calculate` - Get office location configuration
 
 **📖 Complete API Reference**: See [Swagger Documentation](swagger.yaml)
 
@@ -282,16 +289,16 @@ docker-compose up -d
 - ✅ **Operations Layer**: 100% documented (deployment, monitoring)
 
 ### **Document Maintenance**
-- **Total Documents**: 10 core documents
-- **Last Full Review**: June 2, 2025
+- **Total Documents**: 11 core documents
+- **Last Full Review**: June 5, 2025
 - **Update Frequency**: Living documents updated per change
 - **Review Cycle**: Quarterly comprehensive review
 
 ---
 
-**📝 Last Updated**: June 2, 2025  
-**📚 Total Documents**: 10 core documents  
-**🏗️ Status**: Phase 4 Complete - Production Ready  
+**📝 Last Updated**: June 5, 2025
+**📚 Total Documents**: 11 core documents
+**🏗️ Status**: Phase 4 Complete - Production Ready
 **📖 Coverage**: Complete end-to-end documentation
 
 ---
