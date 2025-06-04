@@ -7,7 +7,7 @@ interface StatsCardProps {
   value: string | number;
   subtitle?: string;
   icon?: string;
-  color?: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'indigo' | 'yellow';
+  color?: 'blue' | 'green' | 'purple' | 'orange' | 'red' | 'indigo' | 'yellow' | 'teal';
   trend?: {
     value: number;
     isPositive: boolean;
@@ -23,6 +23,7 @@ const colorVariants = {
   red: 'text-red-600',
   indigo: 'text-indigo-600',
   yellow: 'text-yellow-600',
+  teal: 'text-teal-600',
 };
 
 export default function StatsCard({

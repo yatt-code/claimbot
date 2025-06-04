@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import { dbConnect } from "@/lib/server/db";
 import File from "@/models/File";
 import User from "@/models/User"; // Needed for authorization checks
 import mongoose, { Types } from 'mongoose';

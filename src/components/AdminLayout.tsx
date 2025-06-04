@@ -43,6 +43,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       permission: 'users:read:all',
     },
     {
+      href: '/admin/locations',
+      label: 'Locations',
+      icon: '📍',
+      permission: 'locations:read:all', // Assuming a permission for location management
+    },
+    {
       href: '/admin/rates',
       label: 'Rates',
       icon: '💰',

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import { dbConnect } from "@/lib/server/db";
 import User from "@/models/User";
 import { protectApiRoute } from "@/lib/auth-utils";
 import { z } from "zod";

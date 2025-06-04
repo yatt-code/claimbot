@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import { dbConnect } from "@/lib/server/db";
 import Overtime from "@/models/Overtime";
 import User from "@/models/User";
 // import AuditLog from "@/models/AuditLog"; // Import AuditLog model

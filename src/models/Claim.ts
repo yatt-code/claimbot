@@ -5,6 +5,10 @@ export interface IClaim extends Document {
   date: Date;
   project?: string;
   description?: string;
+  tripMode?: 'ONE_WAY' | 'RETURN' | 'CUSTOM';
+  origin?: string;
+  destination?: string;
+  calculatedMileage?: number;
   expenses: {
     mileage?: number;
     toll?: number;
@@ -29,6 +33,10 @@ const ClaimSchema: Schema = new Schema({
   date: { type: Date, required: true },
   project: { type: String },
   description: { type: String },
+  tripMode: { type: String, enum: ['ONE_WAY', 'RETURN', 'CUSTOM'] },
+  origin: { type: String },
+  destination: { type: String },
+  calculatedMileage: { type: Number },
   expenses: {
     mileage: { type: Number },
     toll: { type: Number },

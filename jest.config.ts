@@ -16,8 +16,18 @@ const config: Config = {
     // Handle module aliases (if using them in tsconfig.json)
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  // Transform node-fetch and other ES module packages
+  transformIgnorePatterns: [
+    '/node_modules/(?!(node-fetch|data-uri-to-buffer|fetch-blob|formdata-polyfill|@whatwg-node/fetch)/)',
+  ],
   // If using TypeScript, add this preset
   preset: 'ts-jest',
+  globals: {
+    'ts-jest': {
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true,
+    },
+  },
 };
 
 // createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async

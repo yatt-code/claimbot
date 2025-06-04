@@ -84,3 +84,5 @@ export async function withDB<T>(fn: () => Promise<T>): Promise<T> {
 
 // Export mongoose for cases where direct access is needed
 export { mongoose };
+
+export { connectDB as dbConnect };

@@ -29,4 +29,18 @@ if (process.env.NODE_ENV !== 'production') {
   }));
 }
 
+interface AuditLogParams {
+  userId: string;
+  action: string;
+  entity: string;
+  entityId?: string;
+  details?: string;
+}
+
+export async function auditLog({ userId, action, entity, entityId, details }: AuditLogParams) {
+  logger.info('Audit Log', { userId, action, entity, entityId, details });
+  // In a real application, you would save this to a database
+  // For now, we'll just log it.
+}
+
 export default logger;

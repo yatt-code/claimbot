@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import dbConnect from "@/lib/mongodb";
+import { dbConnect } from "@/lib/server/db";
 import Claim from "@/models/Claim"; // Assuming Claim model is imported
 import Overtime from "@/models/Overtime"; // Assuming Overtime model is imported
 import User from "@/models/User"; // Assuming User model is imported

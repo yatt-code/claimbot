@@ -62,6 +62,9 @@ const isProtectedRoute = createRouteMatcher([
   '/api/claims(.*)',
   '/api/overtime(.*)',
   '/api/files(.*)',
+  '/admin/locations(.*)', // Add location admin routes
+  '/api/location-templates(.*)', // Add location templates API routes
+  '/api/saved-trip-templates(.*)', // Add saved trip templates API routes
 ]);
 
 /**

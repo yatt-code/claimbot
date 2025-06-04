@@ -1,7 +1,7 @@
 // __tests__/backend/auditLogs.test.ts
 import { createRequest } from 'node-mocks-http';
 import { GET as handleGetAuditLogs } from '@/app/api/audit-logs/route';
-import dbConnect from '@/lib/mongodb';
+import { connectDB } from '@/lib/server/db';
 import AuditLog from '@/models/AuditLog';
 import User from '@/models/User';
 import { jest } from '@jest/globals';
@@ -30,7 +30,7 @@ const mockAuth = auth as unknown as jest.Mock<typeof auth>; // Cast auth to unkn
 
 describe('Audit Logs API', () => {
   beforeAll(async () => {
-    await dbConnect();
+    await connectDB();
     // Clean up the database before tests
     await AuditLog.deleteMany({});
     await User.deleteMany({});

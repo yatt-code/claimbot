@@ -16,6 +16,7 @@ interface AdminStats {
   pendingApprovals: number;
   totalClaimAmount: number;
   totalOvertimeAmount: number;
+  totalLocationTemplates: number; // New stat
 }
 
 interface ClaimData {
@@ -40,6 +41,7 @@ export default function AdminDashboard() {
     pendingApprovals: 0,
     totalClaimAmount: 0,
     totalOvertimeAmount: 0,
+    totalLocationTemplates: 0, // Initialize new stat
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,15 +63,17 @@ export default function AdminDashboard() {
         setLoading(true);
         
         // Fetch basic statistics from various endpoints
-        const [usersResponse, claimsResponse, overtimeResponse] = await Promise.all([
+        const [usersResponse, claimsResponse, overtimeResponse, locationTemplatesResponse] = await Promise.all([
           fetch('/api/users'),
           fetch('/api/claims'),
           fetch('/api/overtime'),
+          fetch('/api/location-templates'), // Fetch location templates
         ]);
 
         const users = usersResponse.ok ? await usersResponse.json() : [];
         const claims = claimsResponse.ok ? await claimsResponse.json() : [];
         const overtime = overtimeResponse.ok ? await overtimeResponse.json() : [];
+        const locationTemplates = locationTemplatesResponse.ok ? await locationTemplatesResponse.json() : [];
 
         // Calculate statistics
         const pendingClaims = claims.filter((claim: ClaimData) => claim.status === 'submitted').length;
@@ -84,6 +88,7 @@ export default function AdminDashboard() {
           pendingApprovals: pendingClaims + pendingOvertime,
           totalClaimAmount,
           totalOvertimeAmount,
+          totalLocationTemplates: locationTemplates.length, // Set new stat
         });
 
       } catch (err: unknown) {
@@ -129,6 +134,20 @@ export default function AdminDashboard() {
           color="blue"
           subtitle="Registered accounts"
           onClick={() => router.push('/admin/users')}
+        />
+      );
+    }
+
+    if (isAdmin) { // Assuming only admins can see location templates
+      cards.push(
+        <StatsCard
+          key="locations"
+          title="Location Templates"
+          value={stats.totalLocationTemplates}
+          icon="📍"
+          color="teal"
+          subtitle="Saved trip locations"
+          onClick={() => router.push('/admin/locations')}
         />
       );
     }

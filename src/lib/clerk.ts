@@ -1,7 +1,7 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import { UserRole } from "@/models/User";
 import User from "@/models/User";
-import connectDB from "./mongodb";
+import { connectDB } from "./server/db";
 
 /**
  * Sync user roles from database to Clerk's public metadata
