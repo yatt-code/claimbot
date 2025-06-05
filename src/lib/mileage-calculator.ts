@@ -13,10 +13,20 @@ export async function calculateMileage(
   destination: string | LocationCoordinates | OfficeLocation, // Allow OfficeLocation
   isRoundTrip: boolean
 ): Promise<number> {
+  console.log("🧮 [MILEAGE CALC DEBUG] Starting calculation:", {
+    origin: typeof origin === 'string' ? `"${origin}"` : origin,
+    destination: typeof destination === 'string' ? `"${destination}"` : destination,
+    isRoundTrip
+  });
+  
   let distance = await getDistanceInKM(origin, destination);
+  console.log("📏 [MILEAGE CALC DEBUG] One-way distance:", distance, "km");
+  
   if (isRoundTrip) {
     distance *= 2;
+    console.log("🔄 [MILEAGE CALC DEBUG] Round-trip distance:", distance, "km");
   }
+  
   return distance;
 }
 

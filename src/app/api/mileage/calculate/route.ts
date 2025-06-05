@@ -42,10 +42,14 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
+    
+    // DEBUG: Log incoming request body
+    console.log("🔍 [MILEAGE DEBUG] Incoming request body:", JSON.stringify(body, null, 2));
 
     // Validate request body
     const validationResult = CalculateMileageSchema.safeParse(body);
     if (!validationResult.success) {
+      console.log("❌ [MILEAGE DEBUG] Validation failed:", validationResult.error.errors);
       return NextResponse.json(
         { error: "Validation failed", details: validationResult.error.errors },
         { status: 400 }
@@ -53,6 +57,13 @@ export async function POST(request: Request) {
     }
 
     const { origin, destination, isRoundTrip } = validationResult.data;
+    
+    // DEBUG: Log parsed and validated data
+    console.log("✅ [MILEAGE DEBUG] Validated data:", {
+      origin: typeof origin === 'string' ? `"${origin}"` : origin,
+      destination: typeof destination === 'string' ? `"${destination}"` : destination,
+      isRoundTrip
+    });
 
     // Validate trip requirements
     const tripValidation = validateTripRequirements(origin, destination);
@@ -63,8 +74,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // DEBUG: Test environment variables
+    console.log("🌍 [MILEAGE DEBUG] Environment check:", {
+      hasGoogleApiKey: !!process.env.GOOGLE_MAPS_API_KEY,
+      apiKeyPrefix: process.env.GOOGLE_MAPS_API_KEY?.substring(0, 10) + "...",
+      officeLat: process.env.OFFICE_LAT,
+      officeLng: process.env.OFFICE_LNG, // Check for correct spelling
+      officeLang: process.env.OFFICE_LANG, // Check for typo
+    });
+
     // Calculate mileage
+    console.log("🚗 [MILEAGE DEBUG] Starting mileage calculation...");
     const distanceKm = await calculateMileage(origin, destination, isRoundTrip);
+    console.log("✅ [MILEAGE DEBUG] Mileage calculated successfully:", distanceKm, "km");
 
     // Check for distance warnings (over 100km)
     const hasWarning = distanceKm > 100;
@@ -73,7 +95,8 @@ export async function POST(request: Request) {
       : undefined;
 
     return NextResponse.json({
-      distanceKm: Math.round(distanceKm * 100) / 100, // Round to 2 decimal places
+      distance: Math.round(distanceKm * 1000), // Convert to meters for frontend compatibility
+      distanceKm: Math.round(distanceKm * 100) / 100, // Keep km for clarity
       hasWarning,
       warningMessage,
       calculatedAt: new Date().toISOString()

@@ -33,6 +33,16 @@ export async function getDistanceInKM(
     const destinationParam = formatLocation(destination);
 
     const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${originParam}&destination=${destinationParam}&key=${GOOGLE_MAPS_API_KEY}`;
+    
+    // DEBUG: Log Google Maps API call details
+    console.log("🗺️ [GOOGLE MAPS DEBUG] API Call Details:", {
+      originInput: typeof origin === 'string' ? `"${origin}"` : origin,
+      destinationInput: typeof destination === 'string' ? `"${destination}"` : destination,
+      originParam: originParam,
+      destinationParam: destinationParam,
+      url: url.replace(GOOGLE_MAPS_API_KEY!, 'API_KEY_HIDDEN'),
+      hasApiKey: !!GOOGLE_MAPS_API_KEY
+    });
 
     const response = await fetch(url);
     
@@ -41,8 +51,21 @@ export async function getDistanceInKM(
     }
 
     const data: GoogleMapsDirectionsResponse = await response.json();
+    
+    // DEBUG: Log Google Maps API response
+    console.log("📥 [GOOGLE MAPS DEBUG] API Response:", {
+      status: data.status,
+      error_message: data.error_message,
+      routesCount: data.routes?.length || 0,
+      firstRouteLegs: data.routes?.[0]?.legs?.length || 0
+    });
 
     if (data.status !== 'OK') {
+      console.error("❌ [GOOGLE MAPS DEBUG] API Error Details:", {
+        status: data.status,
+        error_message: data.error_message,
+        fullResponse: data
+      });
       throw new Error(`Google Maps API error: ${data.status} - ${data.error_message || 'Unknown error'}`);
     }
 

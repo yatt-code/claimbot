@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import FileUploader from "@/components/FileUploader";
 import { DatePicker } from "@/components/DatePicker";
+import LocationAutocomplete, { LocationData } from "@/components/LocationAutocomplete";
 import {
   Form,
   FormControl,
@@ -22,8 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { LocationTemplate } from "@/types/location";
-import SavedTripTemplate, { ISavedTripTemplate } from "@/models/SavedTripTemplate"; // Import SavedTripTemplate model
+import { ISavedTripTemplate } from "@/models/SavedTripTemplate"; // Import SavedTripTemplate model
 import { IAdminTripTemplate } from "@/models/AdminTripTemplate"; // Import AdminTripTemplate model
 import { Checkbox } from "@/components/ui/checkbox"; // Import Checkbox
 import {
@@ -51,9 +51,20 @@ const expenseFormSchema = z.object({
   date: z.string().min(1, { message: "Date is required." }),
   project: z.string().optional(),
   description: z.string().optional(),
-  roundTrip: z.boolean().default(false), // New field for round trip
+  tripMode: z.enum(['default', 'custom']).default('default'), // Default = From Office, Custom = Custom origin
+  roundTrip: z.boolean().default(false), // Return trip flag
   origin: z.string().optional(),
   destination: z.string().optional(),
+  originLocation: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    formatted_address: z.string(),
+  }).optional(),
+  destinationLocation: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    formatted_address: z.string(),
+  }).optional(),
   saveTemplateLabel: z.string().optional(), // New field for saving templates
   calculatedMileage: z.preprocess(
     (val) => val === '' || val === null || val === undefined ? 0 : Number(val),
@@ -81,25 +92,21 @@ const expenseFormSchema = z.object({
   ),
   attachments: z.any().optional(), // File handling
 }).superRefine((data, ctx) => {
-  // If it's a one-way trip and destination is missing
-  if (!data.roundTrip && !data.destination) {
+  // Destination is always required
+  if (!data.destination) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Destination is required for one-way trip.",
+      message: "Destination is required.",
       path: ['destination'],
     });
   }
-  // If it's a round trip and origin or destination is missing
-  if (data.roundTrip && (!data.origin || !data.destination)) {
+  
+  // For custom mode, origin is required
+  if (data.tripMode === 'custom' && !data.origin) {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
-      message: "Origin and Destination are required for round trip.",
+      message: "Origin is required for custom trips.",
       path: ['origin'],
-    });
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Origin and Destination are required for round trip.",
-      path: ['destination'],
     });
   }
 });
@@ -116,9 +123,12 @@ export default function SubmitExpensePage() {
       date: "",
       project: "",
       description: "",
-      roundTrip: false, // New field
+      tripMode: "default" as const,
+      roundTrip: false,
       origin: "",
       destination: "",
+      originLocation: undefined,
+      destinationLocation: undefined,
       calculatedMileage: undefined,
       mileage: undefined,
       toll: undefined,
@@ -132,30 +142,21 @@ export default function SubmitExpensePage() {
   const router = useRouter(); // Initialize useRouter
   const searchParams = useSearchParams();
   const [isSubmitting, setIsSubmitting] = useState(false); // State for submission loading
-  const [locationTemplates, setLocationTemplates] = useState<LocationTemplate[]>([]);
   const [savedTripTemplates, setSavedTripTemplates] = useState<ISavedTripTemplate[]>([]); // State for saved personal trip templates
   const [adminTripTemplates, setAdminTripTemplates] = useState<IAdminTripTemplate[]>([]); // State for admin trip templates
   const [isCalculatingMileage, setIsCalculatingMileage] = useState(false);
   const [mileageCalculationFeedback, setMileageCalculationFeedback] = useState<string | null>(null);
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false); // State for save template dialog
 
-  const roundTrip = form.watch("roundTrip"); // Watch roundTrip instead of tripMode
+  const tripMode = form.watch("tripMode");
+  const roundTrip = form.watch("roundTrip");
   const origin = form.watch("origin");
   const destination = form.watch("destination");
+  const originLocation = form.watch("originLocation");
+  const destinationLocation = form.watch("destinationLocation");
 
   const [debouncedOrigin] = useDebounce(origin, 500);
   const [debouncedDestination] = useDebounce(destination, 500);
-
-  // Fetch location templates
-  useEffect(() => {
-    fetch('/api/location-templates')
-      .then(res => res.json())
-      .then(data => setLocationTemplates(data))
-      .catch(error => {
-        console.error("Failed to fetch location templates:", error);
-        toast.error("Failed to load location templates.");
-      });
-  }, []);
 
   // Fetch saved trip templates
   const fetchSavedTripTemplates = useCallback(async () => {
@@ -195,11 +196,83 @@ export default function SubmitExpensePage() {
     fetchAdminTripTemplates();
   }, [fetchAdminTripTemplates]);
 
+  // Handle office location population for default mode
+  useEffect(() => {
+    if (tripMode === 'default') {
+      try {
+        // Use client-side environment variables or hardcoded office location
+        const officeLat = process.env.NEXT_PUBLIC_OFFICE_LAT || '2.91074';
+        const officeLng = process.env.NEXT_PUBLIC_OFFICE_LNG || '101.63971';
+        const officeName = process.env.NEXT_PUBLIC_OFFICE_NAME || 'Object Expression Sdn. Bhd.';
+        
+        const lat = parseFloat(officeLat);
+        const lng = parseFloat(officeLng);
+        
+        if (isNaN(lat) || isNaN(lng)) {
+          throw new Error('Invalid office coordinates');
+        }
+        
+        form.setValue("origin", officeName);
+        form.setValue("originLocation", {
+          lat: lat,
+          lng: lng,
+          formatted_address: officeName,
+        });
+      } catch (error) {
+        console.error("Failed to get office location:", error);
+        toast.error("Failed to load office location. Please use custom mode.");
+      }
+    } else {
+      // Clear origin for custom mode
+      form.setValue("origin", "");
+      form.setValue("originLocation", undefined);
+    }
+  }, [tripMode, form]);
+
   // Mileage calculation effect
   useEffect(() => {
     const calculateMileage = async () => {
-      // Only calculate if both origin and destination are provided
-      if (debouncedOrigin && debouncedDestination) {
+      // Determine the origin and destination for calculation
+      let calcOrigin: string | { lat: number; lng: number } | undefined;
+      let calcDestination: string | { lat: number; lng: number } | undefined;
+
+      if (tripMode === 'default') {
+        // Use office location coordinates directly
+        try {
+          const officeLat = process.env.NEXT_PUBLIC_OFFICE_LAT || '2.91074';
+          const officeLng = process.env.NEXT_PUBLIC_OFFICE_LNG || '101.63971';
+          const lat = parseFloat(officeLat);
+          const lng = parseFloat(officeLng);
+          
+          if (!isNaN(lat) && !isNaN(lng)) {
+            calcOrigin = { lat, lng };
+          } else {
+            console.error("Invalid office coordinates for mileage calculation");
+            return;
+          }
+        } catch (error) {
+          console.error("Failed to get office location for calculation:", error);
+          return;
+        }
+      } else if (originLocation) {
+        // Use structured origin location (from autocomplete)
+        calcOrigin = { lat: originLocation.lat, lng: originLocation.lng };
+      } else {
+        // Don't use text fallback - only calculate with structured data
+        // This prevents API calls with incomplete addresses like "Object Ex"
+        calcOrigin = undefined;
+      }
+
+      if (destinationLocation) {
+        // Use structured destination location (from autocomplete)
+        calcDestination = { lat: destinationLocation.lat, lng: destinationLocation.lng };
+      } else {
+        // Don't use text fallback - only calculate with structured data
+        calcDestination = undefined;
+      }
+
+      // Only calculate if both origin and destination have structured coordinates
+      if (calcOrigin && calcDestination) {
         setIsCalculatingMileage(true);
         setMileageCalculationFeedback(null);
         try {
@@ -207,9 +280,9 @@ export default function SubmitExpensePage() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              origin: debouncedOrigin,
-              destination: debouncedDestination,
-              isRoundTrip: roundTrip, // Send isRoundTrip boolean
+              origin: calcOrigin,
+              destination: calcDestination,
+              isRoundTrip: roundTrip,
             }),
           });
           if (!response.ok) {
@@ -220,7 +293,7 @@ export default function SubmitExpensePage() {
           const calculatedKm = parseFloat((data.distance / 1000).toFixed(2)); // Convert meters to km
           form.setValue("calculatedMileage", calculatedKm);
           form.setValue("mileage", calculatedKm); // Auto-fill mileage field
-          setMileageCalculationFeedback(`Estimated distance: ${calculatedKm} km via Google Maps`);
+          setMileageCalculationFeedback(`Estimated distance: ${calculatedKm} km (via Google Maps)`);
 
           if (calculatedKm > 100) {
             toast.error("Trip distance exceeds 100km. Please ensure this is accurate.");
@@ -242,7 +315,7 @@ export default function SubmitExpensePage() {
     };
 
     calculateMileage();
-  }, [roundTrip, debouncedOrigin, debouncedDestination, form]); // Update dependencies
+  }, [tripMode, roundTrip, debouncedOrigin, debouncedDestination, originLocation, destinationLocation, form]);
 
   // Prefill form if editing a draft
   useEffect(() => {
@@ -255,9 +328,12 @@ export default function SubmitExpensePage() {
             date: data.date ? data.date.slice(0, 10) : "",
             project: data.project || "",
             description: data.description || "",
-            roundTrip: data.roundTrip ?? false, // Use roundTrip
+            tripMode: data.tripMode || "default",
+            roundTrip: data.roundTrip ?? false,
             origin: data.origin || "",
             destination: data.destination || "",
+            originLocation: data.originLocation || undefined,
+            destinationLocation: data.destinationLocation || undefined,
             calculatedMileage: data.calculatedMileage ?? undefined,
             mileage: data.expenses?.mileage ?? undefined,
             toll: data.expenses?.toll ?? undefined,
@@ -287,9 +363,12 @@ export default function SubmitExpensePage() {
         date: values.date,
         project: values.project,
         description: values.description,
-        roundTrip: values.roundTrip, // Use roundTrip
+        tripMode: values.tripMode,
+        roundTrip: values.roundTrip,
         origin: values.origin,
         destination: values.destination,
+        originLocation: values.originLocation,
+        destinationLocation: values.destinationLocation,
         calculatedMileage: values.calculatedMileage,
         expenses: {
           mileage: values.mileage ?? 0,
@@ -378,8 +457,19 @@ export default function SubmitExpensePage() {
     if (template) {
       form.reset({
         ...form.getValues(), // Keep existing values for other fields
+        tripMode: 'custom', // Templates are always custom mode
         origin: template.origin.address,
         destination: template.destination.address,
+        originLocation: {
+          lat: template.origin.lat,
+          lng: template.origin.lng,
+          formatted_address: template.origin.address,
+        },
+        destinationLocation: {
+          lat: template.destination.lat,
+          lng: template.destination.lng,
+          formatted_address: template.destination.address,
+        },
         roundTrip: template.roundTrip,
         calculatedMileage: undefined, // Recalculate mileage
         mileage: undefined, // Recalculate mileage
@@ -393,9 +483,11 @@ export default function SubmitExpensePage() {
     const label = form.getValues("saveTemplateLabel");
     const origin = form.getValues("origin");
     const destination = form.getValues("destination");
-    const roundTrip = form.getValues("roundTrip"); // Get roundTrip
+    const originLocation = form.getValues("originLocation");
+    const destinationLocation = form.getValues("destinationLocation");
+    const roundTrip = form.getValues("roundTrip");
 
-    if (!label || !origin || !destination) { // tripMode is no longer a direct input
+    if (!label || !origin || !destination) {
       toast.error("Please fill in template name, origin, and destination to save as template.");
       return;
     }
@@ -404,26 +496,51 @@ export default function SubmitExpensePage() {
     const loadingToast = toast.loading("Saving trip template...");
 
     try {
-      // For simplicity, assuming origin and destination are addresses that need geocoding
-      // In a real scenario, you might store lat/lng directly or have a more robust location picker
-      const geocodeLocation = async (address: string) => {
-        const response = await fetch(`/api/mileage/geocode?address=${encodeURIComponent(address)}`);
+      // Use structured location data if available, otherwise geocode
+      let finalOriginLocation;
+      let finalDestinationLocation;
+
+      if (originLocation) {
+        finalOriginLocation = {
+          address: origin,
+          lat: originLocation.lat,
+          lng: originLocation.lng,
+        };
+      } else {
+        // Fallback to geocoding
+        const response = await fetch(`/api/mileage/geocode?address=${encodeURIComponent(origin)}`);
         if (!response.ok) {
-          throw new Error(`Failed to geocode address: ${address}`);
+          throw new Error(`Failed to geocode origin address: ${origin}`);
         }
         const data = await response.json();
         if (!data.lat || !data.lng) {
-          throw new Error(`Could not find coordinates for address: ${address}`);
+          throw new Error(`Could not find coordinates for origin address: ${origin}`);
         }
-        return { address, lat: data.lat, lng: data.lng };
-      };
+        finalOriginLocation = { address: origin, lat: data.lat, lng: data.lng };
+      }
 
-      const originLocation = await geocodeLocation(origin);
-      const destinationLocation = await geocodeLocation(destination);
+      if (destinationLocation) {
+        finalDestinationLocation = {
+          address: destination,
+          lat: destinationLocation.lat,
+          lng: destinationLocation.lng,
+        };
+      } else {
+        // Fallback to geocoding
+        const response = await fetch(`/api/mileage/geocode?address=${encodeURIComponent(destination)}`);
+        if (!response.ok) {
+          throw new Error(`Failed to geocode destination address: ${destination}`);
+        }
+        const data = await response.json();
+        if (!data.lat || !data.lng) {
+          throw new Error(`Could not find coordinates for destination address: ${destination}`);
+        }
+        finalDestinationLocation = { address: destination, lat: data.lat, lng: data.lng };
+      }
 
       const newTemplate = {
-        origin: originLocation,
-        destination: destinationLocation,
+        origin: finalOriginLocation,
+        destination: finalDestinationLocation,
         roundTrip: roundTrip, // Use the form's roundTrip value
         label,
       };
@@ -568,24 +685,63 @@ export default function SubmitExpensePage() {
             )}
           />
 
-          {/* Origin Field - Always visible, but can be pre-filled by office location */}
+          {/* Trip Mode Selector */}
+          <FormField
+            control={form.control}
+            name="tripMode"
+            render={({ field }) => (
+              <FormItem className="grid gap-2 md:col-span-2">
+                <FormLabel>Trip Mode</FormLabel>
+                <FormControl>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select trip mode" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">From Office (Default)</SelectItem>
+                      <SelectItem value="custom">Custom Origin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          {/* Origin Field - Only visible for custom mode, auto-filled for default mode */}
           <FormField
             control={form.control}
             name="origin"
             render={({ field }) => (
               <FormItem className="grid gap-2">
-                <FormLabel>Origin</FormLabel>
+                <FormLabel>
+                  Origin
+                  {tripMode === 'default' && (
+                    <span className="text-sm text-gray-500 font-normal ml-2">(Office Location)</span>
+                  )}
+                </FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="e.g., Office, or a custom address"
-                    onChange={(e) => {
-                      field.onChange(e);
+                  <LocationAutocomplete
+                    value={field.value || ''}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      // Clear mileage calculation feedback when origin changes
+                      form.setValue("calculatedMileage", undefined);
+                      form.setValue("mileage", undefined);
+                      form.setValue("originLocation", undefined);
+                      setMileageCalculationFeedback(null);
+                    }}
+                    onLocationSelect={(locationData: LocationData) => {
+                      form.setValue("originLocation", locationData);
                       // Clear mileage calculation feedback when origin changes
                       form.setValue("calculatedMileage", undefined);
                       form.setValue("mileage", undefined);
                       setMileageCalculationFeedback(null);
                     }}
+                    placeholder={tripMode === 'default' ? "Office location (auto-filled)" : "Enter origin address"}
+                    disabled={tripMode === 'default'}
+                    readOnly={tripMode === 'default'}
+                    className={tripMode === 'default' ? "bg-gray-100 text-gray-500" : ""}
                   />
                 </FormControl>
                 <FormMessage />
@@ -601,16 +757,24 @@ export default function SubmitExpensePage() {
               <FormItem className="grid gap-2">
                 <FormLabel>Destination</FormLabel>
                 <FormControl>
-                  <Input
-                    {...field}
-                    placeholder="e.g., KPKT, or a custom address"
-                    onChange={(e) => {
-                      field.onChange(e);
+                  <LocationAutocomplete
+                    value={field.value || ''}
+                    onChange={(value) => {
+                      field.onChange(value);
+                      // Clear mileage calculation feedback when destination changes
+                      form.setValue("calculatedMileage", undefined);
+                      form.setValue("mileage", undefined);
+                      form.setValue("destinationLocation", undefined);
+                      setMileageCalculationFeedback(null);
+                    }}
+                    onLocationSelect={(locationData: LocationData) => {
+                      form.setValue("destinationLocation", locationData);
                       // Clear mileage calculation feedback when destination changes
                       form.setValue("calculatedMileage", undefined);
                       form.setValue("mileage", undefined);
                       setMileageCalculationFeedback(null);
                     }}
+                    placeholder="Enter destination address"
                   />
                 </FormControl>
                 <FormMessage />
