@@ -13,6 +13,21 @@ const createClaimSchema = z.object({
   }),
   project: z.string().optional(),
   description: z.string().optional(),
+  tripMode: z.enum(['default', 'custom']).optional(),
+  roundTrip: z.boolean().optional(),
+  origin: z.string().optional(),
+  destination: z.string().optional(),
+  originLocation: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    formatted_address: z.string(),
+  }).optional(),
+  destinationLocation: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    formatted_address: z.string(),
+  }).optional(),
+  calculatedMileage: z.number().optional(),
   expenses: z.object({
     mileage: z.number().optional(),
     toll: z.number().optional(),
@@ -135,11 +150,22 @@ export async function POST(request: Request) {
 
     // Calculate totalClaim (mileage at RM0.5/km unless configured differently)
     const mileageRate = 0.5; // TODO: fetch from config if available
+    
+    // DEBUG: Log calculation details
+    console.log("=== BACKEND TOTAL CALCULATION DEBUG ===");
+    console.log("Received roundTrip flag:", body.roundTrip);
+    console.log("Mileage value:", validatedData.expenses?.mileage || 0);
+    console.log("Mileage rate:", mileageRate);
+    console.log("Calculated mileage from frontend:", body.calculatedMileage);
+    console.log("=======================================");
+    
     const totalClaim = ((validatedData.expenses?.mileage || 0) * mileageRate) +
                        (validatedData.expenses?.toll || 0) +
                        (validatedData.expenses?.petrol || 0) +
                        (validatedData.expenses?.meal || 0) +
                        (validatedData.expenses?.others || 0);
+                       
+    console.log("Final total calculation:", totalClaim);
 
 
     const newClaim = new Claim({
@@ -147,8 +173,15 @@ export async function POST(request: Request) {
       date: new Date(validatedData.date),
       project: validatedData.project,
       description: validatedData.description,
+      tripMode: validatedData.tripMode,
+      roundTrip: validatedData.roundTrip,
+      origin: validatedData.origin,
+      destination: validatedData.destination,
+      originLocation: validatedData.originLocation,
+      destinationLocation: validatedData.destinationLocation,
+      calculatedMileage: validatedData.calculatedMileage,
       expenses: validatedData.expenses,
-      // mileageRate will be fetched from config later
+      mileageRate: mileageRate,
       totalClaim: totalClaim,
       attachments: [], // Attachments linked via file upload endpoint
       status: validatedData.status ?? 'draft', // Use provided status or default to draft

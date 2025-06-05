@@ -32,13 +32,21 @@ interface ExpenseDetail extends SubmissionDetails {
 }
 
 export default function ExpenseDetailPage({ params }: ExpenseDetailProps) {
-  const expenseId = params.id;
   const router = useRouter();
-
   const [expenseDetails, setExpenseDetails] = useState<ExpenseDetail | null>(null);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [expenseId, setExpenseId] = useState<string>('');
+
+  // Handle async params in Next.js 15
+  useEffect(() => {
+    const getParams = async () => {
+      const resolvedParams = await params;
+      setExpenseId(resolvedParams.id);
+    };
+    getParams();
+  }, [params]);
 
   const handleEdit = () => {
     if (expenseDetails?.status === 'draft') {
@@ -86,6 +94,8 @@ export default function ExpenseDetailPage({ params }: ExpenseDetailProps) {
   };
 
   useEffect(() => {
+    if (!expenseId) return; // Wait for expenseId to be set
+
     const fetchExpenseDetails = async () => {
       try {
         setLoading(true);
@@ -153,7 +163,7 @@ export default function ExpenseDetailPage({ params }: ExpenseDetailProps) {
     };
 
     fetchExpenseDetails();
-  }, [expenseId]);
+  }, [expenseId]); // Only depend on expenseId
 
   if (loading) {
     return (
@@ -283,8 +293,8 @@ export default function ExpenseDetailPage({ params }: ExpenseDetailProps) {
                   <div className="space-y-1">
                     {expenseDetails.expenses.mileage !== undefined && expenseDetails.expenses.mileage > 0 && (
                       <div className="flex justify-between">
-                        <span>Mileage:</span>
-                        <span>RM {expenseDetails.expenses.mileage.toFixed(2)}</span>
+                        <span>Mileage ({expenseDetails.expenses.mileage.toFixed(2)} km @ RM {(expenseDetails.mileageRate || 0.5).toFixed(2)}/km):</span>
+                        <span>RM {(expenseDetails.expenses.mileage * (expenseDetails.mileageRate || 0.5)).toFixed(2)}</span>
                       </div>
                     )}
                     {expenseDetails.expenses.toll !== undefined && expenseDetails.expenses.toll > 0 && (

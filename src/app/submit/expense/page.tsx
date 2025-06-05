@@ -147,6 +147,8 @@ export default function SubmitExpensePage() {
   const [isCalculatingMileage, setIsCalculatingMileage] = useState(false);
   const [mileageCalculationFeedback, setMileageCalculationFeedback] = useState<string | null>(null);
   const [isSaveTemplateDialogOpen, setIsSaveTemplateDialogOpen] = useState(false); // State for save template dialog
+  const [isLoadingEditData, setIsLoadingEditData] = useState(false); // State to prevent clearing during form load
+  const [protectMileageField, setProtectMileageField] = useState(false); // Additional protection for mileage field
 
   const tripMode = form.watch("tripMode");
   const roundTrip = form.watch("roundTrip");
@@ -229,13 +231,33 @@ export default function SubmitExpensePage() {
     }
   }, [tripMode, form]);
 
+  // Helper function to geocode address text to coordinates
+  const geocodeAddress = async (address: string): Promise<{ lat: number; lng: number } | null> => {
+    try {
+      const response = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(address)}&key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`);
+      const data = await response.json();
+      
+      if (data.status === 'OK' && data.results.length > 0) {
+        const location = data.results[0].geometry.location;
+        return { lat: location.lat, lng: location.lng };
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error("Geocoding error:", error);
+      return null;
+    }
+  };
+
   // Mileage calculation effect
   useEffect(() => {
     const calculateMileage = async () => {
+      
       // Determine the origin and destination for calculation
       let calcOrigin: string | { lat: number; lng: number } | undefined;
       let calcDestination: string | { lat: number; lng: number } | undefined;
 
+      // Handle origin calculation
       if (tripMode === 'default') {
         // Use office location coordinates directly
         try {
@@ -257,21 +279,27 @@ export default function SubmitExpensePage() {
       } else if (originLocation) {
         // Use structured origin location (from autocomplete)
         calcOrigin = { lat: originLocation.lat, lng: originLocation.lng };
+      } else if (debouncedOrigin && debouncedOrigin.trim().length >= 3) {
+        // Fallback: Geocode the text address for origin
+        const geocodedOrigin = await geocodeAddress(debouncedOrigin.trim());
+        calcOrigin = geocodedOrigin || undefined;
       } else {
-        // Don't use text fallback - only calculate with structured data
-        // This prevents API calls with incomplete addresses like "Object Ex"
         calcOrigin = undefined;
       }
 
+      // Handle destination calculation
       if (destinationLocation) {
         // Use structured destination location (from autocomplete)
         calcDestination = { lat: destinationLocation.lat, lng: destinationLocation.lng };
+      } else if (debouncedDestination && debouncedDestination.trim().length >= 3) {
+        // Fallback: Geocode the text address for destination
+        const geocodedDestination = await geocodeAddress(debouncedDestination.trim());
+        calcDestination = geocodedDestination || undefined;
       } else {
-        // Don't use text fallback - only calculate with structured data
         calcDestination = undefined;
       }
 
-      // Only calculate if both origin and destination have structured coordinates
+      // Only calculate if both origin and destination have coordinates
       if (calcOrigin && calcDestination) {
         setIsCalculatingMileage(true);
         setMileageCalculationFeedback(null);
@@ -312,28 +340,55 @@ export default function SubmitExpensePage() {
           setIsCalculatingMileage(false);
         }
       } else {
-        form.setValue("calculatedMileage", undefined);
-        form.setValue("mileage", undefined);
-        setMileageCalculationFeedback(null);
+        // Only clear mileage when not loading edit data and not protecting the field
+        if (!isLoadingEditData && !protectMileageField) {
+          form.setValue("calculatedMileage", undefined);
+          form.setValue("mileage", undefined);
+          setMileageCalculationFeedback(null);
+        }
       }
     };
 
     calculateMileage();
-  }, [tripMode, roundTrip, debouncedOrigin, debouncedDestination, originLocation, destinationLocation, form]);
+  }, [tripMode, roundTrip, debouncedOrigin, debouncedDestination, originLocation, destinationLocation, form, isLoadingEditData, protectMileageField]);
 
   // Prefill form if editing a draft
   useEffect(() => {
     const editId = searchParams.get("edit");
     if (editId) {
+      setIsLoadingEditData(true);
+      setProtectMileageField(true);
       fetch(`/api/claims/${editId}`)
         .then(res => res.ok ? res.json() : Promise.reject("Failed to fetch claim"))
         .then(data => {
+          console.log("=== EDITING CLAIM DATA ===");
+          console.log("Loaded claim data:", data);
+          console.log("roundTrip value:", data.roundTrip);
+          console.log("mileage value:", data.expenses?.mileage);
+          console.log("calculatedMileage value:", data.calculatedMileage);
+          console.log("=========================");
+          
+          // For existing claims without roundTrip field, infer it from mileage calculation
+          // Since we can't reliably determine trip type from stored data alone,
+          // we'll default to false and require manual setting by user
+          let inferredRoundTrip = data.roundTrip ?? false;
+          
+          // However, if the mileage seems suspiciously high (> 10km), assume round trip
+          if (data.roundTrip === undefined && data.expenses?.mileage && data.expenses.mileage > 10) {
+            inferredRoundTrip = true;
+            console.log("Inferring roundTrip=true for high mileage:", {
+              storedMileage: data.expenses.mileage,
+              inferredRoundTrip
+            });
+          }
+          
+
           form.reset({
             date: data.date ? data.date.slice(0, 10) : "",
             project: data.project || "",
             description: data.description || "",
             tripMode: data.tripMode || "default",
-            roundTrip: data.roundTrip ?? false,
+            roundTrip: inferredRoundTrip ?? false,
             origin: data.origin || "",
             destination: data.destination || "",
             originLocation: data.originLocation || undefined,
@@ -347,9 +402,28 @@ export default function SubmitExpensePage() {
             attachments: null,
             status: data.status,
           });
+          
+          // Force update the form to ensure UI reflects the loaded values
+          setTimeout(() => {
+            console.log("Form values after reset:", form.getValues());
+            console.log("Mileage field specifically:", form.getValues().mileage);
+            console.log("IsLoadingEditData flag:", isLoadingEditData);
+            setIsLoadingEditData(false); // Clear loading flag after form is populated
+            
+            // Force form re-render to ensure UI reflects the values and clear validation errors
+            form.trigger();
+            
+            // For custom trips, ensure validation is triggered to clear any errors
+            if (data.tripMode === 'custom' && data.origin) {
+              setTimeout(() => {
+                form.trigger('origin'); // Trigger validation for origin field
+              }, 100);
+            }
+          }, 200);
         })
         .catch(() => {
           toast.error("Failed to load draft for editing.");
+          setIsLoadingEditData(false); // Clear loading flag on error
         });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -363,6 +437,15 @@ export default function SubmitExpensePage() {
     try {
       const editId = searchParams.get("edit");
       let claimResponse;
+      
+      // DEBUG: Log form data before submission
+      console.log("=== FORM SUBMISSION DEBUG ===");
+      console.log("Round Trip Flag:", values.roundTrip);
+      console.log("Calculated Mileage from API:", values.calculatedMileage);
+      console.log("Mileage field value:", values.mileage);
+      console.log("Trip Mode:", values.tripMode);
+      console.log("=============================");
+      
       const claimData = {
         date: values.date,
         project: values.project,
@@ -731,18 +814,28 @@ export default function SubmitExpensePage() {
                     value={field.value || ''}
                     onChange={(value) => {
                       field.onChange(value);
-                      // Clear mileage calculation feedback when origin changes
-                      form.setValue("calculatedMileage", undefined);
-                      form.setValue("mileage", undefined);
-                      form.setValue("originLocation", undefined);
-                      setMileageCalculationFeedback(null);
+                      // Clear validation errors when user types
+                      if (value.trim()) {
+                        form.clearErrors('origin');
+                      }
+                      // Only clear mileage when user actually changes the field, not during form load
+                      if (!isLoadingEditData) {
+                        form.setValue("calculatedMileage", undefined);
+                        form.setValue("mileage", undefined);
+                        form.setValue("originLocation", undefined);
+                        setMileageCalculationFeedback(null);
+                      }
                     }}
                     onLocationSelect={(locationData: LocationData) => {
                       form.setValue("originLocation", locationData);
-                      // Clear mileage calculation feedback when origin changes
-                      form.setValue("calculatedMileage", undefined);
-                      form.setValue("mileage", undefined);
-                      setMileageCalculationFeedback(null);
+                      // Clear validation errors when user selects location
+                      form.clearErrors('origin');
+                      // Only clear mileage when user actually changes the field, not during form load
+                      if (!isLoadingEditData) {
+                        form.setValue("calculatedMileage", undefined);
+                        form.setValue("mileage", undefined);
+                        setMileageCalculationFeedback(null);
+                      }
                     }}
                     placeholder={tripMode === 'default' ? "Office location (auto-filled)" : "Enter origin address"}
                     disabled={tripMode === 'default'}
@@ -768,18 +861,24 @@ export default function SubmitExpensePage() {
                     value={field.value || ''}
                     onChange={(value) => {
                       field.onChange(value);
-                      // Clear mileage calculation feedback when destination changes
-                      form.setValue("calculatedMileage", undefined);
-                      form.setValue("mileage", undefined);
-                      form.setValue("destinationLocation", undefined);
-                      setMileageCalculationFeedback(null);
+                      // Only clear mileage when user actually changes the field, not during form load
+                      if (!isLoadingEditData) {
+                        form.setValue("calculatedMileage", undefined);
+                        form.setValue("mileage", undefined);
+                        form.setValue("destinationLocation", undefined);
+                        setMileageCalculationFeedback(null);
+                        // Clear protection when user actively changes destination
+                        setProtectMileageField(false);
+                      }
                     }}
                     onLocationSelect={(locationData: LocationData) => {
                       form.setValue("destinationLocation", locationData);
-                      // Clear mileage calculation feedback when destination changes
-                      form.setValue("calculatedMileage", undefined);
-                      form.setValue("mileage", undefined);
-                      setMileageCalculationFeedback(null);
+                      // Only clear mileage when user actually changes the field, not during form load
+                      if (!isLoadingEditData) {
+                        form.setValue("calculatedMileage", undefined);
+                        form.setValue("mileage", undefined);
+                        setMileageCalculationFeedback(null);
+                      }
                     }}
                     placeholder="Enter destination address"
                   />

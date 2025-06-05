@@ -11,6 +11,21 @@ import { z } from 'zod';
 const updateClaimSchema = z.object({
   project: z.string().optional(),
   description: z.string().optional(),
+  tripMode: z.enum(['default', 'custom']).optional(),
+  roundTrip: z.boolean().optional(),
+  origin: z.string().optional(),
+  destination: z.string().optional(),
+  originLocation: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    formatted_address: z.string(),
+  }).optional(),
+  destinationLocation: z.object({
+    lat: z.number(),
+    lng: z.number(),
+    formatted_address: z.string(),
+  }).optional(),
+  calculatedMileage: z.number().optional(),
   expenses: z.object({
     mileage: z.number().optional(),
     toll: z.number().optional(),
@@ -181,9 +196,13 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       // Apply updates
       if (validatedData.project !== undefined) claim.project = validatedData.project;
       if (validatedData.description !== undefined) claim.description = validatedData.description;
-      // Apply updates
-      if (validatedData.project !== undefined) claim.project = validatedData.project;
-      if (validatedData.description !== undefined) claim.description = validatedData.description;
+      if (validatedData.tripMode !== undefined) claim.tripMode = validatedData.tripMode;
+      if (validatedData.roundTrip !== undefined) claim.roundTrip = validatedData.roundTrip;
+      if (validatedData.origin !== undefined) claim.origin = validatedData.origin;
+      if (validatedData.destination !== undefined) claim.destination = validatedData.destination;
+      if (validatedData.originLocation !== undefined) claim.originLocation = validatedData.originLocation;
+      if (validatedData.destinationLocation !== undefined) claim.destinationLocation = validatedData.destinationLocation;
+      if (validatedData.calculatedMileage !== undefined) claim.calculatedMileage = validatedData.calculatedMileage;
       // Always update expenses if provided, even if some fields are 0 or undefined
       if (validatedData.expenses !== undefined) {
           // Ensure claim.expenses is initialized if it's null or undefined
@@ -198,18 +217,29 @@ export async function PATCH(request: Request, { params }: { params: { id: string
 
           // Recalculate totalClaim after expenses update (mileage at RM0.5/km)
           const mileageRate = 0.5; // TODO: fetch from config if available
+          
+          // DEBUG: Log calculation details
+          console.log("=== BACKEND PATCH CALCULATION DEBUG ===");
+          console.log("Received roundTrip flag:", body.roundTrip);
+          console.log("Mileage value being saved:", claim.expenses?.mileage || 0);
+          console.log("Mileage rate:", mileageRate);
+          console.log("Calculated mileage from frontend:", body.calculatedMileage);
+          console.log("======================================");
+          
           claim.totalClaim = ((claim.expenses?.mileage || 0) * mileageRate) +
                              (claim.expenses?.toll || 0) +
                              (claim.expenses?.petrol || 0) +
                              (claim.expenses?.meal || 0) +
                              (claim.expenses?.others || 0);
+                             
+          console.log("Final total calculation:", claim.totalClaim);
       }
       // Allow status update (e.g., draft -> submitted)
       if (validatedData.status && validatedData.status !== claim.status) {
         claim.status = validatedData.status;
       }
 
-      await claim.save();
+      await claim.save({ validateBeforeSave: false });
 
       // Basic Audit Logging
       await AuditLog.create({
