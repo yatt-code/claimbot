@@ -264,8 +264,13 @@ export function LocationAutocomplete({
     if (disabled || readOnly) {
       setSuggestions([]);
       setShowSuggestions(false);
+    } else {
+      // Force reload Google Maps API check when field becomes enabled
+      if (!isGoogleMapsLoaded && !isLoadingScript) {
+        loadGoogleMaps();
+      }
     }
-  }, [disabled, readOnly]);
+  }, [disabled, readOnly, isGoogleMapsLoaded, isLoadingScript, loadGoogleMaps]);
 
   // Handle input changes and debounced suggestion fetching
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

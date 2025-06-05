@@ -295,8 +295,12 @@ export default function SubmitExpensePage() {
           form.setValue("mileage", calculatedKm); // Auto-fill mileage field
           setMileageCalculationFeedback(`Estimated distance: ${calculatedKm} km (via Google Maps)`);
 
-          if (calculatedKm > 100) {
-            toast.error("Trip distance exceeds 100km. Please ensure this is accurate.");
+          // Validate distance based on trip type
+          const maxDistance = roundTrip ? 200 : 100;
+          const tripType = roundTrip ? "round trip" : "one-way trip";
+          
+          if (calculatedKm > maxDistance) {
+            toast.error(`${tripType} distance exceeds ${maxDistance}km. Please ensure this is accurate.`);
           }
         } catch (error: unknown) {
           const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
@@ -722,6 +726,8 @@ export default function SubmitExpensePage() {
                 </FormLabel>
                 <FormControl>
                   <LocationAutocomplete
+                    key={`origin-${tripMode}`}
+                    id="origin-field"
                     value={field.value || ''}
                     onChange={(value) => {
                       field.onChange(value);
@@ -758,6 +764,7 @@ export default function SubmitExpensePage() {
                 <FormLabel>Destination</FormLabel>
                 <FormControl>
                   <LocationAutocomplete
+                    id="destination-field"
                     value={field.value || ''}
                     onChange={(value) => {
                       field.onChange(value);

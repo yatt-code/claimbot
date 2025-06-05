@@ -488,4 +488,40 @@ Add a new TDL whenever you:
   - **Tradeoffs**: More complex template management UI, additional database collections to maintain
   - **Scalability Impact**: System can grow with organization needs while maintaining user productivity
 
+### [2025-06-05] Implement Google Places Autocomplete for Location Input
+- **Status**: Accepted
+- **Context**: Original expense form used plain text inputs for origin/destination, leading to inconsistent location data and geocoding errors during mileage calculation
+- **Decision**: Implemented Google Places Autocomplete API integration with structured location data capture (`lat`, `lng`, `formatted_address`)
+- **Consequences**:
+  - **Benefits**: Consistent location data, reduced geocoding API calls, improved user experience, eliminated manual address entry errors
+  - **Tradeoffs**: Additional Google Maps API dependency, requires API key management, increased frontend complexity
+  - **Technical Impact**: Created reusable [`LocationAutocomplete`](src/components/LocationAutocomplete.tsx:1) component, enhanced form validation with structured data
+
+### [2025-06-05] Migrate Office Location to Client-Side Environment Variables
+- **Status**: Accepted
+- **Context**: Office location defaulting was failing due to server-side environment variable access limitations in client components
+- **Decision**: Added client-side environment variables (`NEXT_PUBLIC_OFFICE_LAT`, `NEXT_PUBLIC_OFFICE_LNG`, `NEXT_PUBLIC_OFFICE_NAME`) for office location access
+- **Consequences**:
+  - **Benefits**: Reliable office location defaulting, faster client-side access, no server round-trips needed
+  - **Tradeoffs**: Office coordinates exposed in client bundle, requires careful handling of sensitive data
+  - **Security Impact**: Office location is not sensitive data, acceptable for client-side exposure
+
+### [2025-06-05] Standardize Mileage API Response Format for Frontend Compatibility
+- **Status**: Accepted
+- **Context**: Frontend expected `distance` in meters but API only returned `distanceKm`, causing calculation failures and form errors
+- **Decision**: Modified [`/api/mileage/calculate`](src/app/api/mileage/calculate/route.ts:1) to return both formats: `distance` (meters) and `distanceKm` for backward compatibility
+- **Consequences**:
+  - **Benefits**: Eliminated frontend calculation errors, maintained API backward compatibility, clear data format expectations
+  - **Tradeoffs**: Slightly larger API response payload, need to maintain dual format
+  - **Integration Impact**: Seamless frontend integration without breaking existing consumers
+
+### [2025-06-05] Adopt Structured Location Data Over Plain Text Addresses
+- **Status**: Accepted
+- **Context**: Plain text address inputs were causing 422 API errors due to incomplete or invalid location data being sent to Google Maps API
+- **Decision**: Implemented structured location objects with required `lat`, `lng`, and `formatted_address` fields throughout the system
+- **Consequences**:
+  - **Benefits**: Eliminated 422 API errors, consistent location data format, improved validation and error handling
+  - **Tradeoffs**: More complex form validation logic, requires migration of existing plain text data
+  - **Data Quality Impact**: Ensures all location data is geocoded and validated before storage
+
 ---
