@@ -525,3 +525,53 @@ Add a new TDL whenever you:
   - **Data Quality Impact**: Ensures all location data is geocoded and validated before storage
 
 ---
+
+## Development Phase: 7 - Salary Verification and Overtime System
+
+### [2025-06-06] Salary Verification Workflow Design
+- **Status**: Accepted
+- **Context**: Needed a robust system to verify user salary data to ensure accurate overtime calculations and prevent fraud.
+- **Decision**: Implemented a multi-step workflow:
+  - User submits salary (monthly or hourly).
+  - Admin/Finance reviews and verifies the submission.
+  - Overtime submission is gated by `isVerified` status.
+- **Consequences**:
+  - **Benefits**: Enhanced data integrity, reduced manual errors, improved compliance for overtime payouts.
+  - **Tradeoffs**: Added administrative overhead for verification, introduced a new dependency for overtime submission.
+  - **Business Impact**: Ensures fair and accurate overtime compensation based on validated data.
+
+### [2025-06-06] Validation Schema Refinement for Salary and Overtime
+- **Status**: Accepted
+- **Context**: Required strict validation for salary inputs and new overtime business rules (monthly cap, weekday restriction).
+- **Decision**: Extended Zod schemas for `User` and `Overtime` models:
+  - `User` schema now includes `salary.amount`, `salary.type`, `salary.isVerified` fields with appropriate validation.
+  - `Overtime` schema includes validation for 18-hour monthly cap and weekday 8 PM restriction.
+- **Consequences**:
+  - **Benefits**: Enforced business rules at the data layer, prevented invalid submissions, improved data quality.
+  - **Tradeoffs**: Increased complexity of validation logic, required careful testing of edge cases.
+  - **Technical Impact**: Robust and type-safe validation for critical financial data.
+
+### [2025-06-06] UX Decisions for Salary Verification Workflow
+- **Status**: Accepted
+- **Context**: Users needed clear feedback on their salary verification status and why overtime submission might be disabled.
+- **Decision**: Implemented intuitive UX features:
+  - **Salary Submission Form**: Allows input for either monthly or hourly salary, with clear instructions.
+  - **Verification Status Indicators**: Display "Pending", "Verified", "Rejected" status on user profile.
+  - **Overtime Button State**: Dynamically enable/disable overtime submission button based on salary `isVerified` status.
+  - **Tooltips/Messages**: Provide informative messages when overtime is disabled due to unverified salary.
+- **Consequences**:
+  - **Benefits**: Improved user clarity, reduced support queries, guided users through the verification process.
+  - **Tradeoffs**: Required frontend logic for conditional rendering and state management.
+  - **User Impact**: Seamless and transparent experience for salary submission and overtime access.
+
+### [2025-06-06] Admin Interface Design for Salary Management
+- **Status**: Accepted
+- **Context**: Administrators needed a dedicated interface to manage and verify user salary submissions.
+- **Decision**: Developed a new admin page (`/admin/salary-verification`) and integrated it with the existing RBAC system:
+  - **Salary Verification Card**: Displays pending salary submissions with options to approve/reject.
+  - **User Profile Integration**: Added salary verification status and management options to individual user detail pages (`/admin/users/[id]`).
+  - **Role-Based Access**: Only users with `finance` or `admin` roles can access salary verification features.
+- **Consequences**:
+  - **Benefits**: Centralized management of salary data, streamlined verification process, secure access control.
+  - **Tradeoffs**: Required development of new UI components and API endpoints for admin actions.
+  - **Operational Impact**: Empowered administrators to efficiently manage salary verification and ensure data accuracy.

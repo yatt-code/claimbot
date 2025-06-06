@@ -45,8 +45,15 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
   department: "Management",
   designation: "Technical Consultant",
   role: "staff", // or "manager", "finance", "admin"
-  salary: 4500,
-  hourlyRate: 4500 / 173,
+  salary: {
+    amount: 4500, // Stored as monthly or hourly
+    type: "monthly", // "monthly" or "hourly"
+    isVerified: false, // Boolean indicating if salary is verified
+    submittedAt: ISODate, // Timestamp of last submission
+    verifiedAt: ISODate, // Timestamp of verification
+    verifiedBy: ObjectId // Admin user who verified
+  },
+  hourlyRate: 4500 / 173, // Derived from salary.amount and type
   isActive: true,
   createdAt: ISODate,
   updatedAt: ISODate
@@ -120,7 +127,10 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
   approvedAt: ISODate,
   remarks: "",
   createdAt: ISODate,
-  updatedAt: ISODate
+  updatedAt: ISODate,
+  // New fields for validation tracking
+  monthlyCapExceeded: false, // True if this submission exceeds the 18-hour monthly cap
+  weekdayRestrictionViolated: false // True if overtime claimed before 8 PM on a weekday
 }
 ```
 
@@ -261,6 +271,12 @@ This SDS provides a comprehensive technical blueprint for building the Internal 
 - `PATCH /users/:id`
 - `DELETE /users/:id`
 
+### Salary Management
+- `POST /api/users/salary` — Submit or update user's salary data
+- `GET /api/users/salary/status` — Get current user's salary verification status
+- `POST /api/users/:id/salary/verify` — Admin endpoint to verify a user's salary (updates `isVerified` to true)
+- `POST /api/users/:id/salary/reject` — Admin endpoint to reject a user's salary (updates `isVerified` to false, adds remarks)
+
 ### Claims
 - `GET /claims`
 - `POST /claims`
@@ -368,10 +384,10 @@ Justification [____________]
 
 | Role    | Permissions                                           |
 |---------|-------------------------------------------------------|
-| Staff   | Submit/edit/view own claims/overtime                  |
+| Staff   | Submit/edit/view own claims/overtime, submit salary data, view salary status |
 | Manager | Approve direct reports' submissions                   |
-| Finance | Export reports, update payout statuses               |
-| Admin   | Full control: config rates, users, view audit logs   |
+| Finance | Export reports, update payout statuses, verify user salary data |
+| Admin   | Full control: config rates, users, view audit logs, manage salary verification |
 
 ---
 

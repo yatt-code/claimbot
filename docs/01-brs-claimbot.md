@@ -42,10 +42,10 @@ This project aims to develop an internal system that **digitizes and streamlines
 
 | Role | Primary Responsibilities |
 |------|-------------------------|
-| **Staff** | Submit expense claims and overtime requests |
+| **Staff** | Submit expense claims and overtime requests, submit salary data for verification |
 | **Managers** | Review and approve/reject submissions from team members |
-| **Finance/HR** | Monitor claims, manage rate configurations, generate reports |
-| **System Admin** | Oversee system operations, manage users and roles |
+| **Finance/HR** | Monitor claims, manage rate configurations, generate reports, verify user salary data |
+| **System Admin** | Oversee system operations, manage users and roles, manage salary verification statuses |
 
 ---
 
@@ -85,7 +85,7 @@ This project aims to develop an internal system that **digitizes and streamlines
 ### 4.2 Overtime Calculations
 
 **Rate Calculation:**
-- Based on user's hourly rate (derived from annual salary)
+- Based on user's hourly rate (derived from annual salary, after verification)
 - Multipliers vary by day type and user designation:
 
 | Day Type | Multiplier |
@@ -94,24 +94,41 @@ This project aims to develop an internal system that **digitizes and streamlines
 | **Weekends** | 1.5x |
 | **Public Holidays** | 2.0x – 3.0x (admin configurable) |
 
+**Validation Rules:**
+- **18-hour monthly cap:** Overtime submissions are capped at 18 hours per user per calendar month.
+- **Weekday restriction:** Overtime cannot be claimed for hours before 8 PM on weekdays.
+- **Salary Verification Prerequisite:** Users must have a verified salary on file to submit overtime requests.
+- **Rate Calculation:** Overtime pay is calculated based on the verified hourly rate derived from the user's annual salary.
+
 **Submission Requirements:**
 - Must include business justification
 - Requires defined approval workflow
 
-### 4.3 Salary Management
+### 4.3 Salary Verification Workflow
 
-- Stored per user for overtime rate calculations
-- **Admin-only access** (hidden from regular users)
-- Used exclusively for automated overtime calculations
+The salary verification process ensures that overtime calculations are based on accurate and verified salary data.
+
+**Workflow:**
+1. **User Submission:** Employees submit their salary data (either monthly or hourly, not both) through the system.
+2. **Admin Verification:** Designated administrators (Finance/HR, System Admin) review the submitted salary data.
+3. **Verification Status:** Once verified, the user's salary status is updated to 'Verified'.
+4. **Overtime Access:** Only users with a 'Verified' salary status can submit overtime requests. Overtime submission buttons are disabled for unverified users.
+
+**Key Features:**
+- **Flexible Input:** Users can provide either monthly or hourly salary. The system will derive the other value.
+- **Verification Indicators:** Clear visual indicators for salary verification status (e.g., 'Pending', 'Verified', 'Rejected').
+- **Admin Management:** Admin interface for reviewing, approving, or rejecting salary submissions.
+
+### 4.4 Role-Based Permissions
 
 ### 4.4 Role-Based Permissions
 
 | Role | System Permissions |
 |------|-------------------|
-| **Staff** | • Submit, view, and edit own claims/overtime<br>• View submission status and history |
+| **Staff** | • Submit, view, and edit own claims/overtime<br>• View submission status and history<br>• Submit salary data for verification<br>• View salary verification status |
 | **Manager** | • All Staff permissions<br>• Approve/reject direct reports' submissions |
-| **Finance** | • Export system data<br>• Monitor financial totals<br>• Update payout statuses |
-| **Admin** | • Full system access<br>• User management (CRUD operations)<br>• Rate and designation configuration |
+| **Finance** | • Export system data<br>• Monitor financial totals<br>• Update payout statuses<br>• Verify user salary data |
+| **Admin** | • Full system access<br>• User management (CRUD operations)<br>• Rate and designation configuration<br>• Manage salary verification statuses |
 
 ### 4.5 Document Management
 
@@ -148,8 +165,9 @@ Staff Submission → Manager Review → [Optional] Finance Review → Final Appr
 | Feature Category | Specific Functionality |
 |-----------------|----------------------|
 | **Submission Management** | Intuitive forms for expense claims and overtime logging |
-| **Status Tracking** | Real-time visibility of submission status and history |
-| **Administrative Controls** | Interface for configuring mileage rates and overtime rules |
+| **Salary Verification** | Secure submission and verification of user salary data |
+| **Status Tracking** | Real-time visibility of submission status and history, including salary verification status |
+| **Administrative Controls** | Interface for configuring mileage rates and overtime rules, and managing salary verification |
 | **Approval Dashboard** | Centralized review and action interface for managers/finance |
 | **Document Support** | Secure upload and viewing of receipts and justification documents |
 | **Reporting & Export** | Filterable monthly reports with multiple export formats |
