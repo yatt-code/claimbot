@@ -58,10 +58,13 @@ const isProtectedRoute = createRouteMatcher([
   '/expense(.*)',
   '/overtime(.*)',
   '/profile(.*)',
+  '/auth/profile(.*)', // Add profile routes
   '/manager(.*)', // Add manager routes for redirect pages
   '/api/claims(.*)',
   '/api/overtime(.*)',
   '/api/files(.*)',
+  '/api/users/salary(.*)', // Add salary API routes - only requires authentication
+  '/api/auth/profile(.*)', // Add profile API routes
   '/admin/locations(.*)', // Add location admin routes
   '/api/location-templates(.*)', // Add location templates API routes
   '/api/saved-trip-templates(.*)', // Add saved trip templates API routes

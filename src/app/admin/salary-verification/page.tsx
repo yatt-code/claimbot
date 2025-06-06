@@ -5,6 +5,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { format } from "date-fns";
 import { toast } from "sonner";
 
+import AdminLayout from "@/components/AdminLayout";
 import { DataTable } from "@/components/DataTable";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,15 +55,39 @@ const fetchSalaryVerificationRequests = async (): Promise<SalaryVerificationRequ
     }
     const users: ApiUser[] = await response.json();
     
-    console.log('DEBUG: Admin fetched users for salary verification:', users.length);
+    console.log('DEBUG: Admin fetched users for salary verification:', {
+      totalUsers: users.length,
+      usersWithSalaryData: users.filter(u => u.monthlySalary !== undefined).length,
+      usersWithPendingStatus: users.filter(u => u.salaryVerificationStatus === 'pending').length,
+      usersWithSubmissionDate: users.filter(u => u.salarySubmittedAt).length,
+      detailedUsers: users.map(u => ({
+        email: u.email,
+        monthlySalary: u.monthlySalary,
+        hourlyRate: u.hourlyRate,
+        salaryVerificationStatus: u.salaryVerificationStatus,
+        salarySubmittedAt: u.salarySubmittedAt
+      }))
+    });
     
-    // Filter users with pending salary verification
-    return users
-      .filter((user: ApiUser) =>
-        user.salaryVerificationStatus &&
-        user.monthlySalary !== undefined &&
-        user.hourlyRate !== undefined
-      )
+    // Filter users with actual salary submissions (not just default pending status)
+    const filteredUsers = users
+      .filter((user: ApiUser) => {
+        const hasActualSalaryData = user.monthlySalary !== undefined && user.hourlyRate !== undefined;
+        const hasSubmissionDate = user.salarySubmittedAt !== undefined;
+        const hasPendingStatus = user.salaryVerificationStatus === 'pending';
+        
+        console.log(`DEBUG: User ${user.email}:`, {
+          hasActualSalaryData,
+          hasSubmissionDate,
+          hasPendingStatus,
+          monthlySalary: user.monthlySalary,
+          salaryVerificationStatus: user.salaryVerificationStatus,
+          salarySubmittedAt: user.salarySubmittedAt
+        });
+        
+        // Only include users who have actually submitted salary data
+        return hasActualSalaryData && hasSubmissionDate && hasPendingStatus;
+      })
       .map((user: ApiUser) => ({
         id: user._id,
         userId: user._id,
@@ -74,6 +99,9 @@ const fetchSalaryVerificationRequests = async (): Promise<SalaryVerificationRequ
         status: user.salaryVerificationStatus as "pending" | "verified" | "rejected",
         history: [] // TODO: Implement history tracking
       }));
+    
+    console.log('DEBUG: Filtered salary verification requests:', filteredUsers.length);
+    return filteredUsers;
   } catch (error) {
     console.error('Error fetching salary verification requests:', error);
     return [];
@@ -100,7 +128,7 @@ export default function SalaryVerificationPage() {
       try {
         const requests = await fetchSalaryVerificationRequests();
         console.log('DEBUG: Loaded salary verification requests:', requests.length);
-        setData(requests.filter(req => req.status === "pending")); // Only show pending for now
+        setData(requests); // fetchSalaryVerificationRequests already filters for pending with actual submissions
       } catch (error) {
         console.error('Error loading salary verification data:', error);
         toast.error('Failed to load salary verification requests');
@@ -135,6 +163,10 @@ export default function SalaryVerificationPage() {
 
       // Remove from pending list
       setData((prev) => prev.filter((req) => req.id !== id));
+      
+      // Trigger a refresh of the AdminLayout notification count
+      window.dispatchEvent(new CustomEvent('salary-verification-updated'));
+      
       return response.json();
     };
 
@@ -167,6 +199,10 @@ export default function SalaryVerificationPage() {
 
       // Remove from pending list
       setData((prev) => prev.filter((req) => req.id !== id));
+      
+      // Trigger a refresh of the AdminLayout notification count
+      window.dispatchEvent(new CustomEvent('salary-verification-updated'));
+      
       return response.json();
     };
 
@@ -274,21 +310,23 @@ export default function SalaryVerificationPage() {
   }
 
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-3xl font-bold mb-6">Salary Verification Management</h1>
-      <div className="flex justify-between items-center mb-4">
-        <Input
-          placeholder="Search all fields..."
-          value={globalFilter}
-          onChange={(event) => setGlobalFilter(event.target.value)}
-          className="max-w-sm"
-        />
+    <AdminLayout>
+      <div className="container mx-auto py-10">
+        <h1 className="text-3xl font-bold mb-6">Salary Verification Management</h1>
+        <div className="flex justify-between items-center mb-4">
+          <Input
+            placeholder="Search all fields..."
+            value={globalFilter}
+            onChange={(event) => setGlobalFilter(event.target.value)}
+            className="max-w-sm"
+          />
+        </div>
+        {loading ? (
+          <div>Loading salary verification requests...</div>
+        ) : (
+          <DataTable columns={columns} data={data} globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
+        )}
       </div>
-      {loading ? (
-        <div>Loading salary verification requests...</div>
-      ) : (
-        <DataTable columns={columns} data={data} globalFilter={globalFilter} setGlobalFilter={setGlobalFilter} />
-      )}
-    </div>
+    </AdminLayout>
   );
 }

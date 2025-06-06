@@ -13,7 +13,8 @@ export async function GET() {
   await dbConnect();
 
   try {
-    const user = await User.findOne({ clerkId: userId });
+    // FIXED: Use direct collection query to avoid Mongoose caching issues
+    const user = await User.collection.findOne({ clerkId: userId });
 
     if (!user) {
       // If user exists in Clerk but not in our DB,
@@ -25,14 +26,13 @@ export async function GET() {
 
     // Calculate monthly OT hours remaining for current month
     const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
-    const monthlyOtHoursUsed = user.monthlyOvertimeHours?.get(currentMonth) || 0;
+    const monthlyOtHoursUsed = user.monthlyOvertimeHours?.get?.(currentMonth) || 0;
     const monthlyOtHoursRemaining = Math.max(0, 18 - monthlyOtHoursUsed);
 
-    console.log('DEBUG: Profile API - User salary status:', {
+    console.log('Profile API - User salary status (FIXED):', {
       userId: user.clerkId,
       salaryVerificationStatus: user.salaryVerificationStatus,
       monthlySalary: user.monthlySalary,
-      hourlyRate: user.hourlyRate,
       monthlyOtHoursRemaining
     });
 
@@ -48,7 +48,7 @@ export async function GET() {
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      // Salary verification data
+      // Salary verification data - FIXED to use correct field values
       salaryStatus: user.salaryVerificationStatus || (user.monthlySalary ? 'pending' : 'not_submitted'),
       salaryData: user.salaryVerificationStatus === 'verified' ? {
         monthlySalary: user.monthlySalary,

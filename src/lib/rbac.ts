@@ -26,7 +26,9 @@ export const ROLE_PERMISSIONS = {
     'files:upload',
     'files:read:own',
     'profile:read:own',
-    'profile:update:own'
+    'profile:update:own',
+    'salary:submit:own',
+    'salary:read:own'
   ],
   manager: [
     'claims:approve',
@@ -36,7 +38,9 @@ export const ROLE_PERMISSIONS = {
     'users:read:team',
     'reports:read:team',
     'analytics:read:basic',
-    'admin:access:approvals'
+    'admin:access:approvals',
+    'salary:verify:team',
+    'salary:read:team'
   ],
   finance: [
     'claims:read:all',
@@ -65,7 +69,10 @@ export const ROLE_PERMISSIONS = {
     'admin:access:users',
     'admin:access:rates',
     'admin:access:audit-logs',
-    'admin:access:trip-templates' // New permission for admin trip templates
+    'admin:access:trip-templates', // New permission for admin trip templates
+    'salary:verify:all',
+    'salary:read:all',
+    'admin:access:salary-verification'
   ],
   superadmin: [
     'roles:manage',

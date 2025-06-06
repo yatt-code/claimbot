@@ -14,19 +14,20 @@ export async function GET() {
   await dbConnect();
 
   try {
-    const authenticatedUser = await User.findOne({ clerkId: userId }).select(
-      'monthlySalary hourlyRate salaryVerificationStatus salarySubmittedAt salaryVerifiedAt salaryVerifiedBy'
-    );
+    // FIXED: Use direct collection query to avoid Mongoose caching issues
+    const authenticatedUser = await User.collection.findOne({ clerkId: userId });
 
     if (!authenticatedUser) {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
-    console.log('DEBUG: Salary status check:', {
+    console.log('DEBUG: Salary status check (FIXED):', {
       userId: authenticatedUser.clerkId,
       status: authenticatedUser.salaryVerificationStatus,
       submittedAt: authenticatedUser.salarySubmittedAt,
-      verifiedAt: authenticatedUser.salaryVerifiedAt
+      verifiedAt: authenticatedUser.salaryVerifiedAt,
+      monthlySalary: authenticatedUser.monthlySalary,
+      hourlyRate: authenticatedUser.hourlyRate
     });
 
     return NextResponse.json({

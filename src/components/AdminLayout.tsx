@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { UserRole } from '@/models/User'; // Import UserRole
+import { useState, useEffect } from 'react';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -23,6 +24,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const { user } = useUser();
   const rbac = useRBAC();
   const pathname = usePathname();
+  const [pendingSalaryCount, setPendingSalaryCount] = useState<number | null>(null);
 
   // Define navigation items with their permissions
   const navItems: NavItem[] = [
@@ -87,6 +89,44 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     },
   ];
 
+  // Fetch pending salary verification count
+  useEffect(() => {
+    const fetchPendingCount = async () => {
+      try {
+        if (rbac.hasAnyRole(['manager', 'admin', 'superadmin'])) {
+          const response = await fetch('/api/admin/salary-verification/pending-count');
+          if (response.ok) {
+            const data = await response.json();
+            setPendingSalaryCount(data.count);
+            console.log('DEBUG: AdminLayout fetched pending salary count:', data.count);
+          } else {
+            console.error('Failed to fetch pending salary count:', response.status);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching pending salary count:', error);
+      }
+    };
+
+    fetchPendingCount();
+    
+    // Refresh count every 30 seconds for real-time updates
+    const interval = setInterval(fetchPendingCount, 30000);
+    
+    // Listen for salary verification updates to refresh count immediately
+    const handleSalaryUpdate = () => {
+      console.log('DEBUG: Received salary verification update event, refreshing count');
+      fetchPendingCount();
+    };
+    
+    window.addEventListener('salary-verification-updated', handleSalaryUpdate);
+    
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('salary-verification-updated', handleSalaryUpdate);
+    };
+  }, [rbac]);
+
   // Filter navigation items based on user permissions and roles
   const visibleNavItems = navItems.filter(item => {
     if (item.permission && !rbac.hasPermission(item.permission)) {
@@ -136,11 +176,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 >
                   <span className="text-lg">{item.icon}</span>
                   <span>{item.label}</span>
-                  {item.href === '/admin/salary-verification' && (
-                    // Placeholder for notification badge
+                  {item.href === '/admin/salary-verification' && pendingSalaryCount !== null && pendingSalaryCount > 0 && (
                     <span className="ml-auto inline-flex items-center rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-medium text-white">
-                      {/* Replace with actual pending count */}
-                      3
+                      {pendingSalaryCount}
                     </span>
                   )}
                 </Link>

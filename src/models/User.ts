@@ -40,7 +40,7 @@ const UserSchema: Schema = new Schema({
   },
   monthlySalary: { type: Number },
   hourlyRate: { type: Number },
-  salaryVerificationStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+  salaryVerificationStatus: { type: String, enum: ['pending', 'verified', 'rejected'] },
   salarySubmittedAt: { type: Date },
   salaryVerifiedAt: { type: Date },
   salaryVerifiedBy: { type: String },
