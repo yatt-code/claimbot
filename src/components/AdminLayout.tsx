@@ -5,6 +5,7 @@ import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
+import { UserRole } from '@/models/User'; // Import UserRole
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -15,7 +16,7 @@ interface NavItem {
   label: string;
   icon: string;
   permission?: string;
-  roles?: string[];
+  roles?: UserRole[]; // Use UserRole type
 }
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
@@ -35,6 +36,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       label: 'Approvals',
       icon: '✅',
       permission: 'claims:approve',
+    },
+    {
+      href: '/admin/salary-verification',
+      label: 'Salary Verification',
+      icon: '💲', // Using a dollar sign emoji for salary verification
+      roles: ['manager', 'admin', 'superadmin'], // Accessible to manager, admin, superadmin
     },
     {
       href: '/admin/users',
@@ -80,10 +87,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     },
   ];
 
-  // Filter navigation items based on user permissions
+  // Filter navigation items based on user permissions and roles
   const visibleNavItems = navItems.filter(item => {
-    if (!item.permission) return true; // Always show items without permissions (like Dashboard)
-    return rbac.hasPermission(item.permission);
+    if (item.permission && !rbac.hasPermission(item.permission)) {
+      return false;
+    }
+    if (item.roles && !rbac.hasAnyRole(item.roles)) {
+      return false;
+    }
+    return true; // Always show items without permissions/roles (like Dashboard)
   });
 
   return (
@@ -124,6 +136,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 >
                   <span className="text-lg">{item.icon}</span>
                   <span>{item.label}</span>
+                  {item.href === '/admin/salary-verification' && (
+                    // Placeholder for notification badge
+                    <span className="ml-auto inline-flex items-center rounded-full bg-red-500 px-2.5 py-0.5 text-xs font-medium text-white">
+                      {/* Replace with actual pending count */}
+                      3
+                    </span>
+                  )}
                 </Link>
               );
             })}

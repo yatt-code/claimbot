@@ -19,9 +19,10 @@ interface DatePickerProps {
     onChange: (value: string) => void;
   };
   label: string;
+  disabled?: boolean; // Add disabled prop
 }
 
-export function DatePicker({ field, label }: DatePickerProps) {
+export function DatePicker({ field, label, disabled }: DatePickerProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -31,6 +32,7 @@ export function DatePicker({ field, label }: DatePickerProps) {
             "w-full justify-start text-left font-normal", // Adjusted width
             !field.value && "text-muted-foreground"
           )}
+          disabled={disabled} // Pass disabled prop to Button
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
           {field.value ? format(new Date(field.value), "PPP") : <span>{label}</span>}
@@ -52,6 +54,7 @@ export function DatePicker({ field, label }: DatePickerProps) {
             }
           }}
           initialFocus
+          disabled={disabled} // Pass disabled prop to Calendar
         />
       </PopoverContent>
     </Popover>

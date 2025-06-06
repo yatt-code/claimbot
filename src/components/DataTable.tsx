@@ -27,18 +27,29 @@ import { Input } from '@/components/ui/input';
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  filterColumnId?: string;
+  globalFilter?: string; // Add globalFilter prop
+  setGlobalFilter?: React.Dispatch<React.SetStateAction<string>>; // Add setGlobalFilter prop
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
-  filterColumnId,
+  globalFilter, // Destructure globalFilter
+  setGlobalFilter, // Destructure setGlobalFilter
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
     []
   );
+  // State for global filter
+  const [internalGlobalFilter, setInternalGlobalFilter] = React.useState(globalFilter || '');
+  
+  // Sync external globalFilter with internal state
+  React.useEffect(() => {
+    if (globalFilter !== undefined) {
+      setInternalGlobalFilter(globalFilter);
+    }
+  }, [globalFilter]);
 
   const table = useReactTable({
     data,
@@ -49,24 +60,23 @@ export function DataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     onColumnFiltersChange: setColumnFilters,
     getFilteredRowModel: getFilteredRowModel(),
+    onGlobalFilterChange: setGlobalFilter || setInternalGlobalFilter, // Use external setter if provided, else internal
     state: {
       sorting,
       columnFilters,
+      globalFilter: globalFilter !== undefined ? globalFilter : internalGlobalFilter, // Use external filter if provided, else internal
     },
   });
 
   return (
     <div>
-      {filterColumnId && (
+      {/* Global filter input, if not provided externally */}
+      {setGlobalFilter === undefined && (
         <div className="flex items-center py-4">
           <Input
-            placeholder={`Filter ${filterColumnId}...`}
-            value={
-              (table.getColumn(filterColumnId)?.getFilterValue() as string) ?? ''
-            }
-            onChange={(event) =>
-              table.getColumn(filterColumnId)?.setFilterValue(event.target.value)
-            }
+            placeholder="Search all columns..."
+            value={internalGlobalFilter}
+            onChange={(event) => setInternalGlobalFilter(event.target.value)}
             className="max-w-sm"
           />
         </div>

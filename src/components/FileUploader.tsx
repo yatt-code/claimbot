@@ -8,6 +8,7 @@ interface FileUploaderProps<TFieldValues extends FieldValues = FieldValues> {
   label: string;
   field: ControllerRenderProps<TFieldValues, FieldPath<TFieldValues>>;
   multiple?: boolean;
+  disabled?: boolean; // Add disabled prop
 }
 
 const FileUploader = <TFieldValues extends FieldValues = FieldValues>({
@@ -15,6 +16,7 @@ const FileUploader = <TFieldValues extends FieldValues = FieldValues>({
   label,
   field,
   multiple,
+  disabled, // Destructure disabled prop
 }: FileUploaderProps<TFieldValues>) => {
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     field.onChange(event.target.files);
@@ -34,6 +36,7 @@ const FileUploader = <TFieldValues extends FieldValues = FieldValues>({
         type="file"
         multiple={multiple}
         onChange={handleFileChange}
+        disabled={disabled} // Pass disabled prop to Input
         // Note: File input value is read-only, so we don't bind field.value to it directly.
         // The selected files are managed via field.onChange and accessed via field.value.
       />
@@ -56,6 +59,7 @@ const FileUploader = <TFieldValues extends FieldValues = FieldValues>({
                     field.onChange(newFiles.files.length > 0 ? newFiles.files : null);
                   }}
                   className="ml-2 text-red-500 hover:text-red-700"
+                  disabled={disabled} // Disable remove button if form is disabled
                 >
                   Remove
                 </button>

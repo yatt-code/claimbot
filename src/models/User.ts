@@ -9,8 +9,13 @@ export interface IUser extends Document {
   department?: string;
   designation?: string;
   roles: UserRole[];
-  salary?: number;
+  monthlySalary?: number;
   hourlyRate?: number;
+  salaryVerificationStatus?: 'pending' | 'verified' | 'rejected';
+  salarySubmittedAt?: Date;
+  salaryVerifiedAt?: Date;
+  salaryVerifiedBy?: string; // Clerk ID of the verifier
+  monthlyOvertimeHours?: Map<string, number>; // Map<YYYY-MM, totalHours>
   isActive: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -33,10 +38,15 @@ const UserSchema: Schema = new Schema({
     }],
     default: ['staff']
   },
-  salary: { type: Number },
+  monthlySalary: { type: Number },
   hourlyRate: { type: Number },
+  salaryVerificationStatus: { type: String, enum: ['pending', 'verified', 'rejected'], default: 'pending' },
+  salarySubmittedAt: { type: Date },
+  salaryVerifiedAt: { type: Date },
+  salaryVerifiedBy: { type: String },
+  monthlyOvertimeHours: { type: Map, of: Number, default: {} }, // Store as Map<string, number>
   isActive: { type: Boolean, default: true },
-}, { 
+}, {
   timestamps: true,
   methods: {
     hasRole(this: IUser, role: UserRole): boolean {

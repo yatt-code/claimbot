@@ -23,8 +23,20 @@ export async function GET() {
       return new NextResponse("User not found in database", { status: 404 });
     }
 
-    // Return user profile data, excluding sensitive info like salary if not admin
-    // This is a simplified example; role-based data filtering would be needed
+    // Calculate monthly OT hours remaining for current month
+    const currentMonth = new Date().toISOString().substring(0, 7); // YYYY-MM
+    const monthlyOtHoursUsed = user.monthlyOvertimeHours?.get(currentMonth) || 0;
+    const monthlyOtHoursRemaining = Math.max(0, 18 - monthlyOtHoursUsed);
+
+    console.log('DEBUG: Profile API - User salary status:', {
+      userId: user.clerkId,
+      salaryVerificationStatus: user.salaryVerificationStatus,
+      monthlySalary: user.monthlySalary,
+      hourlyRate: user.hourlyRate,
+      monthlyOtHoursRemaining
+    });
+
+    // Return user profile data with salary verification status
     return NextResponse.json({
       _id: user._id,
       clerkId: user.clerkId,
@@ -36,9 +48,14 @@ export async function GET() {
       isActive: user.isActive,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      // Include salary/hourlyRate only for authorized roles (e.g., admin, finance)
-      // salary: user.salary,
-      // hourlyRate: user.hourlyRate,
+      // Salary verification data
+      salaryStatus: user.salaryVerificationStatus || (user.monthlySalary ? 'pending' : 'not_submitted'),
+      salaryData: user.salaryVerificationStatus === 'verified' ? {
+        monthlySalary: user.monthlySalary,
+        hourlyRate: user.hourlyRate
+      } : undefined,
+      monthlyOtHoursRemaining,
+      salaryVerificationHistory: [] // TODO: Implement history tracking
     });
 
   } catch (error) {

@@ -3,8 +3,15 @@ import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/server/db";
 import Overtime from "@/models/Overtime";
 import User from "@/models/User";
-// import AuditLog from "@/models/AuditLog"; // Import AuditLog model
+import AuditLog from "@/models/AuditLog"; // Import AuditLog model
+import RateConfig from "@/models/RateConfig"; // Import RateConfig model
 import { z } from 'zod';
+
+// Helper to check if a date is a weekday (Monday-Friday)
+const isWeekday = (date: Date) => {
+  const day = date.getDay();
+  return day >= 1 && day <= 5; // Monday is 1, Friday is 5
+};
 
 // Define Zod schema for creating an overtime request
 const createOvertimeSchema = z.object({
@@ -18,9 +25,28 @@ const createOvertimeSchema = z.object({
     message: "Invalid end time format (HH:MM)",
   }),
   reason: z.string().min(1, "Reason is required"),
-  // attachments will be handled separately
-  // status will default to 'submitted'
-  // userId will be derived from authenticated user
+}).refine((data) => {
+  const requestDate = new Date(data.date);
+  const [startHour] = data.startTime.split(':').map(Number);
+
+  console.log('DEBUG: Backend overtime validation:', {
+    date: data.date,
+    startTime: data.startTime,
+    isWeekday: isWeekday(requestDate),
+    startHour
+  });
+
+  // Weekday time validation: only after 8 PM (20:00)
+  if (isWeekday(requestDate)) {
+    if (startHour < 20) {
+      console.log('DEBUG: Overtime rejected - weekday before 8 PM');
+      return false; // Overtime on weekday must start after 8 PM
+    }
+  }
+  return true;
+}, {
+  message: "Overtime on weekdays can only be submitted for hours after 8 PM.",
+  path: ["startTime"],
 });
 
 
@@ -98,12 +124,26 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Forbidden: Only staff, managers, and admins can submit overtime requests" }, { status: 403 });
     }
 
+    // Salary verification check
+    if (authenticatedUser.salaryVerificationStatus !== 'verified') {
+      return NextResponse.json({ error: "Forbidden: Salary not verified. Please submit your salary for verification." }, { status: 403 });
+    }
+
     const body = await request.json();
+    
+    console.log('DEBUG: Overtime submission request body:', body);
+
+    // Map justification to reason for backend validation
+    const mappedBody = {
+      ...body,
+      reason: body.justification || body.reason
+    };
 
     // Validate request body using Zod
-    const validationResult = createOvertimeSchema.safeParse(body);
+    const validationResult = createOvertimeSchema.safeParse(mappedBody);
 
     if (!validationResult.success) {
+      console.log('DEBUG: Overtime validation failed:', validationResult.error.errors);
       return NextResponse.json({ error: "Invalid request body", details: validationResult.error.errors.map(e => e.message) }, { status: 400 });
     }
 
@@ -122,6 +162,44 @@ export async function POST(request: Request) {
     hoursWorked = parseFloat(hoursWorked.toFixed(2));
 
 
+
+    // Calculate total payout and update monthly overtime hours
+    const currentMonth = new Date(validatedData.date).toISOString().substring(0, 7); // YYYY-MM
+    const existingMonthlyHours = authenticatedUser.monthlyOvertimeHours?.get(currentMonth) || 0;
+
+    // Monthly OT hours cap validation (18 hours)
+    const totalHoursForMonth = existingMonthlyHours + hoursWorked;
+    if (totalHoursForMonth > 18) {
+      return NextResponse.json({ error: "Monthly overtime hours cap (18 hours) exceeded." }, { status: 400 });
+    }
+
+    // Determine day type for rate calculation
+    const requestDate = new Date(validatedData.date);
+    const dayType = isWeekday(requestDate) ? 'weekday' : 'weekend'; // Simplified, public holidays would need a separate check
+
+    // Fetch overtime multiplier from RateConfig
+    const rateConfig = await RateConfig.findOne({
+      type: 'overtime_multiplier',
+      'condition.dayType': dayType,
+      'condition.designation': authenticatedUser.designation, // Use user's designation
+      effectiveDate: { $lte: new Date() } // Get the most recent applicable rate
+    }).sort({ effectiveDate: -1 });
+
+    const rateMultiplier = rateConfig?.multiplier || 1.5; // Default to 1.5 if no specific config found
+
+    // Calculate hourly rate for overtime
+    let userHourlyRate = authenticatedUser.hourlyRate;
+    if (!userHourlyRate && authenticatedUser.monthlySalary) {
+      // Assuming 160 working hours per month for salary conversion
+      userHourlyRate = authenticatedUser.monthlySalary / 160;
+    }
+
+    if (!userHourlyRate) {
+      return NextResponse.json({ error: "Hourly rate or monthly salary not found for user. Please update your profile." }, { status: 400 });
+    }
+
+    const totalPayout = hoursWorked * userHourlyRate * rateMultiplier;
+
     const newOvertime = new Overtime({
       userId: authenticatedUser._id,
       date: new Date(validatedData.date),
@@ -129,27 +207,33 @@ export async function POST(request: Request) {
       endTime: validatedData.endTime,
       reason: validatedData.reason,
       hoursWorked: hoursWorked,
-      // rateMultiplier and hourlyRate will be calculated/fetched later
-      // totalPayout will be calculated later
+      rateMultiplier: rateMultiplier,
+      hourlyRate: userHourlyRate,
+      totalPayout: totalPayout,
       attachments: [],
       status: 'submitted', // Default status
     });
 
     await newOvertime.save();
 
+    // Update monthly overtime tracking in User model
+    authenticatedUser.monthlyOvertimeHours?.set(currentMonth, totalHoursForMonth);
+    await authenticatedUser.save();
+
     // Basic Audit Logging
-    // await AuditLog.create({
-    //     userId: authenticatedUser._id,
-    //     action: 'created_overtime',
-    //     target: { collection: 'overtime', documentId: newOvertime._id },
-    //     details: `Created overtime request with ID ${newOvertime._id}`,
-    // });
+    await AuditLog.create({
+        userId: authenticatedUser._id,
+        action: 'created_overtime',
+        target: { collection: 'overtime', documentId: newOvertime._id },
+        details: `Created overtime request with ID ${newOvertime._id} for ${hoursWorked} hours.`,
+    });
 
 
     return NextResponse.json(newOvertime, { status: 201 });
 
-  } catch (error) {
+  } catch (error: unknown) { // Changed to unknown
     console.error("Error creating overtime request:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    return NextResponse.json({ error: "Internal Server Error", details: errorMessage }, { status: 500 });
   }
 }

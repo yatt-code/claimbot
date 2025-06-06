@@ -10,16 +10,22 @@ import { ControllerRenderProps, FieldValues, FieldPath } from "react-hook-form";
 interface TimePickerProps<TFieldValues extends FieldValues = FieldValues> {
   field: ControllerRenderProps<TFieldValues, FieldPath<TFieldValues>>;
   label: string;
+  disabled?: boolean; // Add disabled prop
 }
 
 export function TimePicker<TFieldValues extends FieldValues>({
   field,
   label,
+  disabled, // Destructure disabled prop
 }: TimePickerProps<TFieldValues>) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button variant="outline" className="w-full justify-start text-left font-normal">
+        <Button
+          variant="outline"
+          className="w-full justify-start text-left font-normal"
+          disabled={disabled} // Pass disabled prop to Button
+        >
           {field.value ? field.value : "Pick a time"}
         </Button>
       </PopoverTrigger>
@@ -33,6 +39,7 @@ export function TimePicker<TFieldValues extends FieldValues>({
             value={field.value || ''} // Ensure controlled component
             onChange={field.onChange}
             className="mt-1"
+            disabled={disabled} // Pass disabled prop to Input
           />
         </div>
       </PopoverContent>
