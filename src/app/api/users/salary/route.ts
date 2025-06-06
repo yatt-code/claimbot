@@ -25,6 +25,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
+    // Check if user can review salary this year
+    const currentYear = new Date().getFullYear();
+    const canReview = !authenticatedUser.lastSalaryReviewYear || authenticatedUser.lastSalaryReviewYear < currentYear;
+
+    if (!canReview) {
+      logger.warn(`User ${authenticatedUser.email} attempted to submit salary but is not eligible for review this year.`);
+      return NextResponse.json({ error: "You can only review your salary once per year." }, { status: 403 });
+    }
+
     logger.info(`User found - ID: ${authenticatedUser._id}, Email: ${authenticatedUser.email}, Current salary: ${authenticatedUser.monthlySalary}, Current status: ${authenticatedUser.salaryVerificationStatus}`);
 
     const body = await request.json();
@@ -47,7 +56,8 @@ export async function POST(request: Request) {
         monthlySalary,
         hourlyRate,
         salaryVerificationStatus: 'pending',
-        salarySubmittedAt: new Date()
+        salarySubmittedAt: new Date(),
+        lastSalaryReviewYear: currentYear // Update the last review year
       },
       $unset: {
         salaryVerifiedAt: "",

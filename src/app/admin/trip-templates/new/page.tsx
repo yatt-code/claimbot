@@ -18,9 +18,8 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox
 import AdminLayout from '@/components/AdminLayout';
 import { useRBAC } from '@/hooks/useRBAC';
-import { useToast } from '@/components/ui/toast';
+import { toast } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
-import { Location } from '@/types/location'; // Import Location type
 
 const locationSchema = z.object({
   address: z.string().min(5, { message: 'Address must be at least 5 characters.' }),
@@ -40,7 +39,6 @@ type NewAdminTripTemplateFormValues = z.infer<typeof formSchema>;
 export default function NewAdminTripTemplatePage() {
   const router = useRouter();
   const { hasPermission, isLoaded: rbacLoaded } = useRBAC();
-  const { addToast } = useToast();
 
   const originAutocompleteInputRef = useRef<HTMLInputElement>(null);
   const destinationAutocompleteInputRef = useRef<HTMLInputElement>(null);
@@ -124,17 +122,10 @@ export default function NewAdminTripTemplatePage() {
         throw new Error(errorData.error || 'Failed to create admin trip template');
       }
 
-      addToast({
-        title: 'Success',
-        description: 'Admin trip template created successfully.',
-      });
+      toast.success('Admin trip template created successfully.');
       router.push('/admin/trip-templates');
-    } catch (err: any) {
-      addToast({
-        title: 'Error',
-        description: err.message || 'An error occurred during creation.',
-        variant: 'destructive',
-      });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'An error occurred during creation.');
     }
   };
 

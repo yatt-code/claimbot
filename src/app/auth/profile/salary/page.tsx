@@ -2,40 +2,39 @@
 
 import StaffLayout from "@/components/StaffLayout";
 import { SalarySubmissionForm } from "@/components/SalarySubmissionForm";
-import { SalaryVerificationStatus } from "@/components/SalaryVerificationStatus";
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 type SalaryStatusType = "not_submitted" | "pending" | "verified" | "rejected";
 
-interface UserProfile {
-  salaryStatus: SalaryStatusType;
-  salaryData?: {
-    monthlySalary: number;
-    hourlyRate: number;
-  };
-  salaryVerificationHistory?: Array<{
-    status: SalaryStatusType;
-    timestamp: string;
-    notes?: string;
-  }>;
+interface SalaryStatus {
+  status: SalaryStatusType;
+  monthlySalary?: number;
+  hourlyRate?: number;
+  submittedAt?: string;
+  verifiedAt?: string;
+  verifiedBy?: string;
+  lastSalaryReviewYear?: number;
+  canReviewSalary: boolean;
+  nextReviewYear: number;
 }
 
 export default function SalaryManagementPage() {
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [salaryStatus, setSalaryStatus] = useState<SalaryStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchUserProfile = async () => {
+  const fetchSalaryStatus = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/auth/profile");
+      const response = await fetch("/api/users/salary/status");
       if (!response.ok) {
-        throw new Error("Failed to fetch user profile.");
+        throw new Error("Failed to fetch salary status.");
       }
-      const data: UserProfile = await response.json();
-      setUserProfile(data);
+      const data: SalaryStatus = await response.json();
+      setSalaryStatus(data);
     } catch (error) {
-      console.error("Error fetching user profile:", error);
+      console.error("Error fetching salary status:", error);
       toast.error("Failed to load salary data.");
     } finally {
       setIsLoading(false);
@@ -43,18 +42,29 @@ export default function SalaryManagementPage() {
   };
 
   useEffect(() => {
-    fetchUserProfile();
+    fetchSalaryStatus();
   }, []);
 
   const handleSalarySubmissionSuccess = () => {
-    fetchUserProfile(); // Re-fetch profile after successful submission
+    fetchSalaryStatus(); // Re-fetch status after successful submission
   };
 
   if (isLoading) {
     return (
       <StaffLayout>
         <div className="flex justify-center items-center h-48">
-          <p>Loading salary data...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <span className="ml-2">Loading salary information...</span>
+        </div>
+      </StaffLayout>
+    );
+  }
+
+  if (!salaryStatus) {
+    return (
+      <StaffLayout>
+        <div className="text-center text-red-600 p-8">
+          Failed to load salary information. Please refresh the page.
         </div>
       </StaffLayout>
     );
@@ -62,75 +72,113 @@ export default function SalaryManagementPage() {
 
   return (
     <StaffLayout>
-      <h1 className="text-2xl font-bold mb-4">Salary Management</h1>
-
-      {userProfile?.salaryStatus && (
-        <div className="mb-6">
-          <SalaryVerificationStatus
-            status={userProfile.salaryStatus}
-            message={
-              userProfile.salaryStatus === "pending"
-                ? "Your salary submission is pending verification."
-                : userProfile.salaryStatus === "rejected"
-                ? "Your previous salary submission was rejected. Please resubmit."
-                : undefined
-            }
-          />
-        </div>
-      )}
-
-      {userProfile?.salaryStatus === "verified" && userProfile.salaryData ? (
-        <div className="mb-6 p-4 border rounded-md">
-          <h2 className="text-xl font-semibold mb-2">Current Salary Details</h2>
-          <p>
-            <strong>Monthly Salary:</strong> ${userProfile.salaryData.monthlySalary.toFixed(2)}
-          </p>
-          <p>
-            <strong>Hourly Rate:</strong> ${userProfile.salaryData.hourlyRate.toFixed(2)}
+      <div className="max-w-4xl mx-auto space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold">Annual Salary Review</h1>
+          <p className="text-gray-600 mt-2">
+            Manage your annual salary review and verification status
           </p>
         </div>
-      ) : (
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold mb-2">Submit Salary Details</h2>
-          <SalarySubmissionForm onSubmissionSuccess={handleSalarySubmissionSuccess} />
-        </div>
-      )}
 
-      {userProfile?.salaryVerificationHistory &&
-        userProfile.salaryVerificationHistory.length > 0 && (
-          <div className="mt-8">
-            <h2 className="text-xl font-semibold mb-2">Verification History</h2>
-            <div className="border rounded-md p-4">
-              {userProfile.salaryVerificationHistory.map((entry, index) => (
-                <div key={index} className="mb-4 pb-4 border-b last:border-b-0">
-                  <p>
-                    <strong>Status:</strong>{" "}
-                    <span
-                      className={`font-medium ${
-                        entry.status === "verified"
-                          ? "text-green-600"
-                          : entry.status === "rejected"
-                          ? "text-red-600"
-                          : "text-yellow-600"
-                      }`}
-                    >
-                      {entry.status.replace(/_/g, " ")}
-                    </span>
-                  </p>
-                  <p>
-                    <strong>Date:</strong>{" "}
-                    {new Date(entry.timestamp).toLocaleString()}
-                  </p>
-                  {entry.notes && (
-                    <p>
-                      <strong>Notes:</strong> {entry.notes}
+        {/* Main Salary Review Form/Status */}
+        <SalarySubmissionForm onSubmissionSuccess={handleSalarySubmissionSuccess} />
+
+        {/* Current Salary Information (if verified) */}
+        {salaryStatus.status === "verified" && (salaryStatus.monthlySalary || salaryStatus.hourlyRate) && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Current Verified Salary Information</CardTitle>
+              <CardDescription>
+                Your salary information as verified by administration
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {salaryStatus.monthlySalary && salaryStatus.monthlySalary > 0 && (
+                  <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                    <h3 className="font-semibold text-green-800">Monthly Salary</h3>
+                    <p className="text-2xl font-bold text-green-900">
+                      RM {salaryStatus.monthlySalary.toLocaleString()}
                     </p>
+                  </div>
+                )}
+                {salaryStatus.hourlyRate && salaryStatus.hourlyRate > 0 && (
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h3 className="font-semibold text-blue-800">Hourly Rate</h3>
+                    <p className="text-2xl font-bold text-blue-900">
+                      RM {salaryStatus.hourlyRate.toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+              
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                  {salaryStatus.submittedAt && (
+                    <div>
+                      <span className="font-medium">Submitted:</span>
+                      <br />
+                      {new Date(salaryStatus.submittedAt).toLocaleDateString()}
+                    </div>
+                  )}
+                  {salaryStatus.verifiedAt && (
+                    <div>
+                      <span className="font-medium">Verified:</span>
+                      <br />
+                      {new Date(salaryStatus.verifiedAt).toLocaleDateString()}
+                    </div>
+                  )}
+                  {salaryStatus.lastSalaryReviewYear && (
+                    <div>
+                      <span className="font-medium">Review Year:</span>
+                      <br />
+                      {salaryStatus.lastSalaryReviewYear}
+                    </div>
                   )}
                 </div>
-              ))}
-            </div>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         )}
+
+        {/* Review Cycle Information */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Annual Review Cycle</CardTitle>
+            <CardDescription>
+              Understanding your salary review schedule
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold text-gray-800">Current Year</h4>
+                  <p className="text-xl font-bold text-gray-900">
+                    {new Date().getFullYear()}
+                  </p>
+                </div>
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <h4 className="font-semibold text-gray-800">Next Review Available</h4>
+                  <p className="text-xl font-bold text-gray-900">
+                    {salaryStatus.nextReviewYear}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                <h4 className="font-semibold text-blue-800 mb-2">Review Policy</h4>
+                <ul className="text-sm text-blue-700 space-y-1">
+                  <li>• Staff can review and update their salary once per calendar year</li>
+                  <li>• All salary reviews require administrative verification</li>
+                  <li>• Verified salary information is required to access overtime features</li>
+                  <li>• Review eligibility resets each January 1st</li>
+                </ul>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </StaffLayout>
   );
 }

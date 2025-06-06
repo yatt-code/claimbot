@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
@@ -18,7 +18,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { useRBAC } from '@/hooks/useRBAC';
 import { IAdminTripTemplate } from '@/models/AdminTripTemplate'; // Import the new model
 import useSWR from 'swr';
-import { useToast } from '@/components/ui/toast';
+import { toast } from 'react-hot-toast';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -26,7 +26,6 @@ export default function AdminTripTemplatesPage() {
   const { hasPermission, isLoaded: rbacLoaded } = useRBAC();
   const { data: adminTripTemplates, error, isLoading } = useSWR<IAdminTripTemplate[]>('/api/admin/trip-templates', fetcher);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { addToast } = useToast();
 
   const canAccess = hasPermission('admin:access:trip-templates');
 
@@ -66,17 +65,10 @@ export default function AdminTripTemplatesPage() {
       if (!response.ok) {
         throw new Error('Failed to delete admin trip template');
       }
-      addToast({
-        title: 'Success',
-        description: 'Admin trip template deleted successfully.',
-      });
+      toast.success('Admin trip template deleted successfully.');
       window.location.reload(); // Simple reload to reflect changes
-    } catch (err: any) {
-      addToast({
-        title: 'Error',
-        description: err.message || 'An error occurred during deletion.',
-        variant: 'destructive',
-      });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'An error occurred during deletion.');
     } finally {
       setIsDeleting(false);
     }

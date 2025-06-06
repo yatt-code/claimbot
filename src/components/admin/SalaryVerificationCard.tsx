@@ -20,7 +20,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Separator } from "@/components/ui/separator";
-import { toast } from "sonner";
 
 export interface SalaryVerificationRequest { // Export the interface
   id: string;
@@ -31,6 +30,9 @@ export interface SalaryVerificationRequest { // Export the interface
   submittedHourlyRate: number;
   submissionDate: string;
   status: "pending" | "verified" | "rejected";
+  lastSalaryReviewYear?: number;
+  canReviewSalary?: boolean;
+  nextReviewYear?: number;
   history?: { action: string; date: string; by: string }[];
 }
 
@@ -64,11 +66,11 @@ export function SalaryVerificationCard({
       <CardContent className="grid gap-4">
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Monthly Salary:</p>
-          <p className="text-sm">${request.submittedMonthlySalary?.toLocaleString()}</p>
+          <p className="text-sm">RM {request.submittedMonthlySalary?.toLocaleString()}</p>
         </div>
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Hourly Rate:</p>
-          <p className="text-sm">${request.submittedHourlyRate?.toLocaleString()}</p>
+          <p className="text-sm">RM {request.submittedHourlyRate?.toLocaleString()}</p>
         </div>
         <div className="flex items-center justify-between">
           <p className="text-sm font-medium">Submission Date:</p>
@@ -87,6 +89,28 @@ export function SalaryVerificationCard({
           >
             {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
           </Badge>
+        </div>
+
+        {/* Annual Review Information */}
+        <Separator className="my-2" />
+        <h3 className="text-md font-semibold">Annual Review Information</h3>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Review Year:</p>
+            <p className="text-sm">{request.lastSalaryReviewYear || new Date().getFullYear()}</p>
+          </div>
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-medium">Can Review Again:</p>
+            <Badge variant={request.canReviewSalary ? "secondary" : "outline"}>
+              {request.canReviewSalary ? "Yes" : "No"}
+            </Badge>
+          </div>
+          {request.nextReviewYear && (
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium">Next Review Available:</p>
+              <p className="text-sm">{request.nextReviewYear}</p>
+            </div>
+          )}
         </div>
 
         {request.history && request.history.length > 0 && (

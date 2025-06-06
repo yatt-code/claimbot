@@ -874,8 +874,8 @@ async function checkDailyUsage() {
 
 ## 📚 Related Documentation
 
-- [Technical Architecture Guide](06-technical-architecture.md) - System architecture overview
-- [Deployment Guide](07-deployment-guide.md) - Production deployment instructions
+- [Technical Architecture Guide](../architecture/technical-architecture.md) - System architecture overview
+- [Deployment Guide](deployment-guide.md) - Production deployment instructions
 - [Location System Implementation](location-system-implementation.md) - Feature implementation details
 
 ---

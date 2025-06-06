@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import AdminLayout from '@/components/AdminLayout';
 import { useRBAC } from '@/hooks/useRBAC';
 import { LocationTemplate } from '@/types/location';
-import { useToast } from '@/components/ui/toast';
+import { toast } from 'react-hot-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -41,7 +41,6 @@ export default function EditLocationPage() {
   const params = useParams();
   const { id } = params;
   const { isAdmin, isLoaded: rbacLoaded } = useRBAC();
-  const { addToast } = useToast();
 
   const { data: location, error, isLoading } = useSWR<LocationTemplate>(
     id ? `/api/location-templates/${id}` : null,
@@ -115,17 +114,10 @@ export default function EditLocationPage() {
         throw new Error('Failed to update location template');
       }
 
-      addToast({
-        title: 'Success',
-        description: 'Location template updated successfully.',
-      });
+      toast.success('Location template updated successfully.');
       router.push('/admin/locations');
-    } catch (err: any) {
-      addToast({
-        title: 'Error',
-        description: err.message || 'An error occurred during update.',
-        variant: 'destructive',
-      });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'An error occurred during update.');
     }
   };
 

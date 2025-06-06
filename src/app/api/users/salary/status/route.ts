@@ -21,13 +21,21 @@ export async function GET() {
       return NextResponse.json({ error: "User not found in database" }, { status: 404 });
     }
 
+    // Calculate review eligibility
+    const currentYear = new Date().getFullYear();
+    const canReviewSalary = !authenticatedUser.lastSalaryReviewYear || authenticatedUser.lastSalaryReviewYear < currentYear;
+    const nextReviewYear = authenticatedUser.lastSalaryReviewYear ? authenticatedUser.lastSalaryReviewYear + 1 : currentYear;
+
     console.log('DEBUG: Salary status check (FIXED):', {
       userId: authenticatedUser.clerkId,
       status: authenticatedUser.salaryVerificationStatus,
       submittedAt: authenticatedUser.salarySubmittedAt,
       verifiedAt: authenticatedUser.salaryVerifiedAt,
       monthlySalary: authenticatedUser.monthlySalary,
-      hourlyRate: authenticatedUser.hourlyRate
+      hourlyRate: authenticatedUser.hourlyRate,
+      lastSalaryReviewYear: authenticatedUser.lastSalaryReviewYear,
+      canReviewSalary,
+      nextReviewYear
     });
 
     return NextResponse.json({
@@ -36,7 +44,10 @@ export async function GET() {
       hourlyRate: authenticatedUser.hourlyRate,
       submittedAt: authenticatedUser.salarySubmittedAt,
       verifiedAt: authenticatedUser.salaryVerifiedAt,
-      verifiedBy: authenticatedUser.salaryVerifiedBy
+      verifiedBy: authenticatedUser.salaryVerifiedBy,
+      lastSalaryReviewYear: authenticatedUser.lastSalaryReviewYear,
+      canReviewSalary,
+      nextReviewYear
     }, { status: 200 });
 
   } catch (error: unknown) {

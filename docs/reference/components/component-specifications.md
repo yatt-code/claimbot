@@ -26,8 +26,8 @@ type PendingItem = {
 # ClaimBot UI Component Specifications & Flow Companion
 
 ## Reference Document
-- **Linked to:** `02-sds-claimbot.md` (System Design Spec)
-- **Wireframe Basis:** `03-wireframe-claimbot.md`
+- **Linked to:** `system-design-specification.md` (System Design Spec)
+- **Wireframe Basis:** `../guides/design/wireframes.md`
 
 ---
 
@@ -54,13 +54,13 @@ type PendingItem = {
 
 ## 2. Staff Components
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 1. Dashboard
+> 🔗 See: `../guides/design/wireframes.md` → Section 1. Dashboard
 
 ### Staff Dashboard (`/dashboard`)
 - **Component:** `RecentSubmissionsTable`
 - **Props:** `submissions[]`
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 1. Dashboard
+> 🔗 See: `../guides/design/wireframes.md` → Section 1. Dashboard
 
 ### Submit Expense Form (`/submit/expense`)
 - **Components:** `ExpenseForm`, `FileUploader`
@@ -71,7 +71,7 @@ type PendingItem = {
     - `attachments[]`
 - **Actions:** `SaveDraft()`, `SubmitClaim()`
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 2. Submit Expense Claim
+> 🔗 See: `../guides/design/wireframes.md` → Section 2. Submit Expense Claim
 
 ### Submit Overtime Form (`/submit/overtime`)
 - **Components:** `OvertimeForm`, `TimeRangePicker`, `JustificationTextArea`
@@ -81,25 +81,25 @@ type PendingItem = {
     - `attachments[]`
 - **Actions:** `SaveDraft()`, `SubmitRequest()`
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 3. Submit Overtime Request
+> 🔗 See: `../guides/design/wireframes.md` → Section 3. Submit Overtime Request
 
 ### My Submissions (`/my-submissions`)
 - **Component:** `SubmissionHistoryTable`
 - **Columns:** date, type, status, amount, action (View)
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 4. My Submissions
+> 🔗 See: `../guides/design/wireframes.md` → Section 4. My Submissions
 
 ---
 
 ## 3. Manager Components
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 5. Approval Dashboard
+> 🔗 See: `../guides/design/wireframes.md` → Section 5. Approval Dashboard
 
 ### Approval Dashboard (`/manager/approvals`)
 - **Component:** `PendingSubmissionsList`
 - **Columns:** user, type, date, action (🔍 Review)
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 5. Approval Dashboard
+> 🔗 See: `../guides/design/wireframes.md` → Section 5. Approval Dashboard
 
 ### Submission Detail View (`/manager/approvals/:id`)
 - **Components:**
@@ -107,13 +107,13 @@ type PendingItem = {
     - `AttachmentViewer`
     - `ActionButtons` (approve, reject, comment)
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 6. Submission Detail View
+> 🔗 See: `../guides/design/wireframes.md` → Section 6. Submission Detail View
 
 ---
 
 ## 4. Admin Panel Components
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 7. Rate Configuration
+> 🔗 See: `../guides/design/wireframes.md` → Section 7. Rate Configuration
 
 ### Rate Configuration (`/admin/rates`)
 - **Component:** `RateConfigForm`
@@ -122,27 +122,27 @@ type PendingItem = {
     - `designation`, `weekdayRate`, `weekendRate`, `holidayRate`
 - **Actions:** `AddRule()`, `SaveSettings()`
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 7. Rate Configuration
+> 🔗 See: `../guides/design/wireframes.md` → Section 7. Rate Configuration
 
 ### User Management (`/admin/users`)
 - **Component:** `UserTable`
 - **Columns:** name, role, department, salary, actions (✏️🗑️)
 - **Actions:** `AddUserModal`, `EditUserModal`
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 8. User Management
+> 🔗 See: `../guides/design/wireframes.md` → Section 8. User Management
 
 ### Audit Logs (`/admin/logs`)
 - **Component:** `AuditLogTable`
 - **Columns:** date, user, action
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 9. Audit Logs
+> 🔗 See: `../guides/design/wireframes.md` → Section 9. Audit Logs
 
 ### Reports & Export (`/admin/reports`)
 - **Component:** `ReportFilterPanel`, `ExportButtons`
 - **Filters:** month, department, type
 - **Actions:** `ExportCSV()`, `ExportPDF()`
 
-> 🔗 See: `03-wireframe-claimbot.md` → Section 10. Reports & Export
+> 🔗 See: `../guides/design/wireframes.md` → Section 10. Reports & Export
 
 ---
 

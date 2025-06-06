@@ -17,8 +17,7 @@ import {
 import { Input } from '@/components/ui/input';
 import AdminLayout from '@/components/AdminLayout';
 import { useRBAC } from '@/hooks/useRBAC';
-import { useToast } from '@/components/ui/toast';
-import { Loader2 } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 
 const formSchema = z.object({
   name: z.string().min(2, {
@@ -36,7 +35,6 @@ type NewLocationFormValues = z.infer<typeof formSchema>;
 export default function NewLocationPage() {
   const router = useRouter();
   const { isAdmin, isLoaded: rbacLoaded } = useRBAC();
-  const { addToast } = useToast();
   const autocompleteInputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
@@ -98,17 +96,10 @@ export default function NewLocationPage() {
         throw new Error('Failed to create location template');
       }
 
-      addToast({
-        title: 'Success',
-        description: 'Location template created successfully.',
-      });
+      toast.success('Location template created successfully.');
       router.push('/admin/locations');
-    } catch (err: any) {
-      addToast({
-        title: 'Error',
-        description: err.message || 'An error occurred during creation.',
-        variant: 'destructive',
-      });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'An error occurred during creation.');
     }
   };
 

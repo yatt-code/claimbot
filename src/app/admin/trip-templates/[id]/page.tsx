@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import AdminLayout from '@/components/AdminLayout';
 import { useRBAC } from '@/hooks/useRBAC';
-import { useToast } from '@/components/ui/toast';
+import { toast } from 'react-hot-toast';
 import { Loader2 } from 'lucide-react';
 import { IAdminTripTemplate } from '@/models/AdminTripTemplate'; // Import the new model
 
@@ -45,7 +45,6 @@ export default function EditAdminTripTemplatePage() {
   const params = useParams();
   const { id } = params;
   const { hasPermission, isLoaded: rbacLoaded } = useRBAC();
-  const { addToast } = useToast();
 
   const originAutocompleteInputRef = useRef<HTMLInputElement>(null);
   const destinationAutocompleteInputRef = useRef<HTMLInputElement>(null);
@@ -161,17 +160,10 @@ export default function EditAdminTripTemplatePage() {
         throw new Error(errorData.error || 'Failed to update admin trip template');
       }
 
-      addToast({
-        title: 'Success',
-        description: 'Admin trip template updated successfully.',
-      });
+      toast.success('Admin trip template updated successfully.');
       router.push('/admin/trip-templates');
-    } catch (err: any) {
-      addToast({
-        title: 'Error',
-        description: err.message || 'An error occurred during update.',
-        variant: 'destructive',
-      });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'An error occurred during update.');
     }
   };
 

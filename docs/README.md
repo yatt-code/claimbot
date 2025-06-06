@@ -11,25 +11,62 @@ Welcome to the ClaimBot documentation center. This hub provides organized access
 ### **📋 Project Foundation**
 | Document | Description | Audience |
 |----------|-------------|----------|
-| **[Business Requirements (BRS)](01-brs-claimbot.md)** | Project objectives, scope, and business rules | All stakeholders |
-| **[System Design (SDS)](02-sds-claimbot.md)** | Technical architecture, database schema, API design | Developers, Architects |
-| **[Development Plan](05-development-plan-claimbot.md)** | Phased development approach and timelines | Project managers, Developers |
+| **[Project Summary](project-summary.md)** | Executive overview and current system status | All stakeholders |
+| **[Business Requirements (BRS)](business-requirements-specification.md)** | Project objectives, scope, and business rules | All stakeholders |
+| **[System Design (SDS)](system-design-specification.md)** | Technical architecture, database schema, API design | Developers, Architects |
+| **[Development Plan](development-plan.md)** | Phased development approach and timelines | Project managers, Developers |
 
 ### **🎨 User Experience & Design**
 | Document | Description | Audience |
 |----------|-------------|----------|
-| **[UI Wireframes](03-wireframe-claimbot.md)** | Visual layout and user interface mockups | Designers, Developers |
-| **[Component Specifications](04-companion-spec-claimbot.md)** | UI component architecture and flows | Frontend developers |
+| **[UI Wireframes](guides/design/wireframes.md)** | Visual layout and user interface mockups | Designers, Developers |
 
-### **🔧 Technical Reference**
+### **🏗️ Architecture & Design**
 | Document | Description | Audience |
 |----------|-------------|----------|
-| **[Technical Architecture](06-technical-architecture.md)** | Comprehensive system architecture and design patterns | Developers, Architects |
-| **[Deployment Guide](07-deployment-guide.md)** | Production deployment, Docker, CI/CD, monitoring | DevOps, System Admins |
-| **[Google Maps Integration](08-google-maps-integration-guide.md)** | Complete Google Maps API setup and integration guide | Developers, DevOps |
+| **[System Overview](architecture/system-overview.md)** | High-level architecture and component relationships | Developers, Architects |
+| **[Technical Architecture](architecture/technical-architecture.md)** | Comprehensive system architecture and design patterns | Developers, Architects |
+| **[Technical Decision Log](architecture/technical-decision-log.md)** | Architecture decisions and rationale | Developers, Architects |
+| **[Location System Specification](architecture/location-system-specification.md)** | Location and mileage calculation system design | Developers, Architects |
+| **[Salary Verification Architecture](architecture/salary-verification-architecture.md)** | Future salary verification and overtime system design | Developers, Architects |
+
+### **📖 User Guides & Workflows**
+| Document | Description | Audience |
+|----------|-------------|----------|
+| **[Claim Submission Workflow](guides/workflows/claim-submission.md)** | End-to-end expense claim submission and approval process | Staff, Managers |
+| **[Overtime Submission Workflow](guides/workflows/overtime-submission.md)** | Overtime request submission and approval process | Staff, Managers |
+| **[Salary Verification Workflow](guides/workflows/salary-verification.md)** | Salary submission and verification process | Staff, Admins |
+| **[User Management Workflow](guides/workflows/user-management.md)** | User account creation and role management | Administrators |
+| **[Submit Expense Page Guide](guides/pages/submit-expense.md)** | Detailed guide for the expense submission page | Staff, Developers |
+
+### **📚 Technical Reference**
+| Document | Description | Audience |
+|----------|-------------|----------|
+| **[API Routes Encyclopedia](reference/api-routes.md)** | Complete API endpoint documentation | Developers, Integrators |
+| **[Data Models Reference](reference/data-models.md)** | Database schema and model definitions | Developers, Architects |
+| **[Component Specifications](reference/components/component-specifications.md)** | UI component architecture and flows | Frontend developers |
+| **[DataTable Component](reference/components/datatable.md)** | DataTable component usage and configuration | Frontend developers |
+| **[Location Autocomplete Component](reference/components/location-autocomplete.md)** | Location autocomplete component guide | Frontend developers |
+
+### **🔧 Technical Implementation**
+| Document | Description | Audience |
+|----------|-------------|----------|
+| **[RBAC & Authentication](technical/rbac-and-auth.md)** | Role-based access control implementation | Developers, Security |
+| **[Google Places Implementation](technical/google-places-implementation.md)** | Google Places API integration and location system | Developers |
+| **[Utility Library Reference](technical/utility-library.md)** | Helper functions and utility documentation | Developers |
+| **[Gaps & Issues Report](technical/gaps-and-issues.md)** | Known limitations and improvement areas | Developers, QA |
+
+### **🚀 Operations & Deployment**
+| Document | Description | Audience |
+|----------|-------------|----------|
+| **[Deployment Guide](guides/deployment-guide.md)** | Production deployment, Docker, CI/CD, monitoring | DevOps, System Admins |
+| **[Google Maps Integration](guides/google-maps-integration-guide.md)** | Complete Google Maps API setup and integration guide | Developers, DevOps |
 | **[API Documentation](swagger.yaml)** | Complete REST API specification (OpenAPI 3.0) | Developers, Integrators |
-| **[Technical Decision Log](00-technical-decision-log.md)** | Architecture decisions and rationale | Developers, Architects |
-| **[Debug & Issues List](00-debug-list.md)** | Known issues, bugs, and TODO items | Developers, QA |
+
+### **📝 Development & Archive**
+| Document | Description | Audience |
+|----------|-------------|----------|
+| **[Historical Debug List](archive/debug-list-historical.md)** | Historical issues and resolved bugs (archived) | Developers, QA |
 
 ---
 
@@ -37,54 +74,94 @@ Welcome to the ClaimBot documentation center. This hub provides organized access
 
 ### **👤 For Staff Users**
 - **Getting Started**: [Main README](../README.md#quick-start) → Quick setup and first steps
-- **User Guide**: [Wireframes - Staff Interface](03-wireframe-claimbot.md#staff-user-interface) → How to submit claims and overtime
-- **Features**: [BRS - Stakeholder Roles](01-brs-claimbot.md#3-stakeholder-roles) → What you can do
+- **Submit Claims**: [Claim Submission Workflow](guides/workflows/claim-submission.md) → How to submit expense claims
+- **Submit Overtime**: [Overtime Submission Workflow](guides/workflows/overtime-submission.md) → How to submit overtime requests
+- **Salary Setup**: [Salary Verification Workflow](guides/workflows/salary-verification.md) → How to submit salary for verification
 
 ### **👨‍💼 For Managers**
-- **Approval Workflow**: [Wireframes - Manager Interface](03-wireframe-claimbot.md#manager-interface) → Review and approve submissions
-- **Business Rules**: [BRS - Approval Workflow](01-brs-claimbot.md#46-approval-workflow) → Understanding the approval process
+- **Approval Process**: [Claim Submission Workflow](guides/workflows/claim-submission.md#32-claim-approvalrejection-by-approver) → Review and approve submissions
+- **Overtime Approval**: [Overtime Submission Workflow](guides/workflows/overtime-submission.md#32-overtime-approvalrejection-by-approver) → Review overtime requests
+- **Salary Verification**: [Salary Verification Workflow](guides/workflows/salary-verification.md#32-adminmanager-verifies-salary-submission) → Verify employee salaries
 
 ### **🏢 For Administrators**
-- **System Setup**: [Technical Architecture](06-technical-architecture.md#-system-architecture-overview) → Technical overview
-- **User Management**: [Wireframes - Admin Panel](03-wireframe-claimbot.md#admin-panel) → Managing users and settings
-- **Rate Configuration**: [BRS - Business Rules](01-brs-claimbot.md#4-business-rules-and-logic) → Understanding calculation rules
+- **System Overview**: [System Overview](architecture/system-overview.md) → High-level architecture understanding
+- **User Management**: [User Management Workflow](guides/workflows/user-management.md) → Managing users and roles
+- **Technical Architecture**: [Technical Architecture](architecture/technical-architecture.md) → Comprehensive system design
+- **RBAC Configuration**: [RBAC & Authentication](technical/rbac-and-auth.md) → Role and permission management
 
 ### **👨‍💻 For Developers**
 - **Quick Start**: [Main README](../README.md#quick-start) → Development environment setup
 - **Contributing**: [Contributing Guide](../CONTRIBUTING.md) → Development workflow and standards
-- **API Reference**: [Swagger Documentation](swagger.yaml) → Complete API specification
-- **Architecture**: [Technical Architecture](06-technical-architecture.md) → Comprehensive system design
-- **Google Maps Setup**: [Google Maps Integration](08-google-maps-integration-guide.md) → Location system API configuration
-- **Technical Decisions**: [Decision Log](00-technical-decision-log.md) → Why we chose specific technologies
+- **API Reference**: [API Routes Encyclopedia](reference/api-routes.md) → Complete API specification
+- **Data Models**: [Data Models Reference](reference/data-models.md) → Database schema and relationships
+- **Architecture**: [System Overview](architecture/system-overview.md) → System design overview
+- **Components**: [Component References](reference/components/) → UI component documentation
+- **Technical Details**: [Technical Implementation](technical/) → Implementation specifics
 
 ### **🚀 For DevOps Engineers**
-- **Deployment**: [Deployment Guide](07-deployment-guide.md) → Production deployment strategies
-- **Docker**: [Deployment Guide - Docker](07-deployment-guide.md#-docker-deployment) → Containerization setup
-- **CI/CD**: [Deployment Guide - Pipeline](07-deployment-guide.md#-cicd-pipeline) → Automated deployment
-- **Monitoring**: [Deployment Guide - Monitoring](07-deployment-guide.md#-monitoring--logging) → System monitoring
+- **Deployment**: [Deployment Guide](guides/deployment-guide.md) → Production deployment strategies
+- **Google Maps Setup**: [Google Maps Integration](guides/google-maps-integration-guide.md) → External API configuration
+- **API Documentation**: [Swagger Documentation](swagger.yaml) → Complete API specification
 
 ---
 
-## 📊 **Documentation Status**
+## 📊 **Documentation Organization**
 
-### **✅ Complete Documentation**
-- ✅ **Business Requirements**: Comprehensive scope and objectives
-- ✅ **System Design**: Full technical specification
-- ✅ **UI Wireframes**: Complete user interface mockups
-- ✅ **Component Specs**: Frontend architecture guide
-- ✅ **Development Plan**: Phased approach with timelines
-- ✅ **Technical Architecture**: Comprehensive system design and patterns
-- ✅ **Deployment Guide**: Production deployment and operations
-- ✅ **Google Maps Integration**: Complete API setup and integration guide
-- ✅ **API Documentation**: OpenAPI 3.0 specification
-- ✅ **Technical Decisions**: Architecture rationale log
-- ✅ **Issue Tracking**: Current bugs and TODO items
+### **📁 Folder Structure**
+```
+docs/
+├── 📋 Project Foundation (root)
+│   ├── project-summary.md (Executive Overview)
+│   ├── business-requirements-specification.md (Business Requirements)
+│   ├── system-design-specification.md (System Design)
+│   └── development-plan.md (Development Plan)
+├── 🏗️ architecture/
+│   ├── system-overview.md (High-level Architecture)
+│   ├── technical-architecture.md (Comprehensive Technical Architecture)
+│   ├── technical-decision-log.md (Architecture Decisions)
+│   ├── location-system-specification.md (Location System Design)
+│   └── salary-verification-architecture.md (Future Salary System)
+├── 📖 guides/
+│   ├── deployment-guide.md (Production Deployment Guide)
+│   ├── google-maps-integration-guide.md (Google Maps Setup Guide)
+│   ├── design/ (UI/UX Design Documents)
+│   │   └── wireframes.md
+│   ├── workflows/ (Business Process Workflows)
+│   │   ├── claim-submission.md
+│   │   ├── overtime-submission.md
+│   │   ├── salary-verification.md
+│   │   └── user-management.md
+│   └── pages/ (Page-specific Guides)
+│       └── submit-expense.md
+├── 📚 reference/
+│   ├── api-routes.md (API Documentation)
+│   ├── data-models.md (Database Schema)
+│   └── components/ (UI Component References)
+│       ├── component-specifications.md
+│       ├── datatable.md
+│       └── location-autocomplete.md
+├── 🔧 technical/
+│   ├── rbac-and-auth.md (Security Implementation)
+│   ├── google-places-implementation.md (Location API Integration)
+│   ├── utility-library.md (Helper Functions)
+│   └── gaps-and-issues.md (Known Issues)
+└── 📁 archive/
+    └── debug-list-historical.md (Historical Debug Data)
+```
 
-### **🔄 Living Documents**
-- 🔄 **Technical Decision Log**: Updated with each architectural choice
-- 🔄 **Debug List**: Continuously updated with issues and resolutions
-- 🔄 **API Documentation**: Maintained with endpoint changes
-- 🔄 **Deployment Guide**: Updated with new deployment strategies
+### **📖 Document Categories**
+
+#### **🏗️ Architecture Documents**
+High-level system design, architectural decisions, and technical overview documents.
+
+#### **📖 Workflow Guides**
+Step-by-step business process documentation with sequence diagrams and user flows.
+
+#### **📚 Reference Materials**
+Technical documentation for APIs, database models, and UI components.
+
+#### **🔧 Technical Implementation**
+Detailed implementation guides for specific technical aspects of the system.
 
 ---
 
@@ -118,7 +195,7 @@ graph TB
     F --> H
 ```
 
-**📖 Detailed Architecture**: See [Technical Architecture Guide](06-technical-architecture.md)
+**📖 Detailed Architecture**: See [System Overview](architecture/system-overview.md) and [Technical Architecture](architecture/technical-architecture.md)
 
 ---
 
@@ -133,7 +210,7 @@ graph TB
 | **audit_logs** | System activity tracking | userId, action, timestamp |
 | **rates_config** | Calculation rate settings | type, value, effectiveDate |
 
-**📖 Detailed Schema**: See [Technical Architecture - Database Schema](06-technical-architecture.md#-database-schema--design)
+**📖 Detailed Schema**: See [Data Models Reference](reference/data-models.md)
 
 ---
 
@@ -167,39 +244,7 @@ graph TB
 - `POST /api/mileage/calculate` - Calculate distance between locations
 - `GET /api/mileage/calculate` - Get office location configuration
 
-**📖 Complete API Reference**: See [Swagger Documentation](swagger.yaml)
-
----
-
-## 🧪 **Testing Documentation**
-
-### **Backend Testing**
-- **Integration Tests**: Complete API route testing with Supertest
-- **Coverage**: 95%+ of all backend endpoints
-- **TypeScript**: Strict mode compliance across all test files
-- **Mocking**: Consistent patterns using Jest mocking
-
-### **Frontend Testing**
-- **Component Tests**: React Testing Library for UI components
-- **Page Tests**: Integration testing for Next.js pages
-- **Utility Tests**: Jest testing for helper functions
-
-### **Test Execution**
-```bash
-# Run all tests
-npm test
-
-# Backend integration tests
-npm run test:backend
-
-# Frontend component tests
-npm run test:frontend
-
-# Coverage report
-npm run test:coverage
-```
-
-**📖 Detailed Testing**: See [Technical Architecture - Testing](06-technical-architecture.md#-testing-architecture)
+**📖 Complete API Reference**: See [API Routes Encyclopedia](reference/api-routes.md) and [Swagger Documentation](swagger.yaml)
 
 ---
 
@@ -211,10 +256,11 @@ npm run test:coverage
 | **Phase 2** | ✅ Complete | Claims & Overtime Backend |
 | **Phase 3** | ✅ Complete | Frontend Core & Staff Modules |
 | **Phase 4** | ✅ Complete | Manager & Admin Modules |
-| **Phase 5** | 🔄 Next | Deployment & Monitoring |
-| **Phase 6** | 🔮 Future | Post-Launch & AI Enhancements |
+| **Phase 5** | ✅ Complete | RBAC Enhancement & Unified Admin |
+| **Phase 6** | ✅ Complete | Location System & Google Maps Integration |
+| **Phase 7** | 🔄 Future | Salary Verification & Advanced Features |
 
-**📖 Detailed Plan**: See [Development Plan](05-development-plan-claimbot.md)
+**📖 Detailed Plan**: See [Development Plan](development-plan.md)
 
 ---
 
@@ -224,10 +270,10 @@ npm run test:coverage
 
 | Platform | Best For | Complexity | Cost |
 |----------|----------|------------|------|
-| **[Vercel](07-deployment-guide.md#vercel-recommended-for-nextjs)** | Quick deployment, Next.js optimization | Low | $ |
-| **[AWS ECS/Fargate](07-deployment-guide.md#aws-ecsfargate-deployment)** | Production scale, full control | High | $$ |
-| **[Google Cloud Run](07-deployment-guide.md#google-cloud-run)** | Serverless, auto-scaling | Medium | $ |
-| **[Docker](07-deployment-guide.md#-docker-deployment)** | Any environment, portability | Medium | Varies |
+| **[Vercel](guides/deployment-guide.md#vercel-recommended-for-nextjs)** | Quick deployment, Next.js optimization | Low | $ |
+| **[AWS ECS/Fargate](guides/deployment-guide.md#aws-ecsfargate-deployment)** | Production scale, full control | High | $$ |
+| **[Google Cloud Run](guides/deployment-guide.md#google-cloud-run)** | Serverless, auto-scaling | Medium | $ |
+| **[Docker](guides/deployment-guide.md#-docker-deployment)** | Any environment, portability | Medium | Varies |
 
 ### **Quick Deployment**
 ```bash
@@ -243,7 +289,7 @@ docker run -p 3000:3000 claimbot
 docker-compose up -d
 ```
 
-**📖 Complete Deployment Guide**: See [Deployment Guide](07-deployment-guide.md)
+**📖 Complete Deployment Guide**: See [Deployment Guide](guides/deployment-guide.md)
 
 ---
 
@@ -251,17 +297,19 @@ docker-compose up -d
 
 ### **How to Use This Hub**
 1. **Start with the BRS** if you're new to the project
-2. **Refer to Technical Architecture** for implementation details
-3. **Use Wireframes** for UI/UX understanding
-4. **Check API docs** for integration work
-5. **Review Decision Log** for architecture context
+2. **Review System Overview** for architectural understanding
+3. **Follow Workflows** for process understanding
+4. **Use Reference docs** for implementation details
+5. **Check Technical docs** for specific implementations
 6. **Follow Deployment Guide** for production setup
 
 ### **Document Structure**
-- **📋 Foundation**: Business requirements and planning
-- **🎨 Design**: User experience and interface design
-- **🔧 Technical**: Architecture, deployment, and operations
-- **🔄 Living**: Continuously updated documents
+- **📋 Foundation**: Business requirements and planning (root level)
+- **🏗️ Architecture**: System design and technical overview
+- **📖 Guides**: User workflows and process documentation
+- **📚 Reference**: API, data models, and component documentation
+- **🔧 Technical**: Implementation details and utilities
+- **🚀 Operations**: Deployment and operational guides
 
 ### **Contributing to Documentation**
 - All documentation follows Markdown format
@@ -271,36 +319,45 @@ docker-compose up -d
 - See [Contributing Guide](../CONTRIBUTING.md) for standards
 
 ### **Getting Help**
-- **Technical Questions**: Review the Technical Architecture and Decision Log
-- **Business Context**: Refer to the Business Requirements
-- **Implementation Details**: Check the System Design Specification
-- **Deployment Issues**: See the Deployment Guide
-- **Current Issues**: Check the Debug List
-- **Development Setup**: Follow the Contributing Guide
+- **Workflow Questions**: Check the [Workflow Guides](guides/workflows/)
+- **Technical Questions**: Review [Technical Implementation](technical/) and [Architecture](architecture/)
+- **API Questions**: See [API Routes Encyclopedia](reference/api-routes.md)
+- **Component Usage**: Check [Component References](reference/components/)
+- **Business Context**: Refer to the [Business Requirements](business-requirements-specification.md)
+- **Deployment Issues**: See the [Deployment Guide](guides/deployment-guide.md)
+- **Current Issues**: Check the [Gaps & Issues Report](technical/gaps-and-issues.md)
 
 ---
 
 ## 📈 **Documentation Metrics**
 
 ### **Coverage Completeness**
-- ✅ **Business Layer**: 100% documented (BRS, wireframes)
-- ✅ **Technical Layer**: 100% documented (architecture, API, deployment)
-- ✅ **Process Layer**: 100% documented (development, contributing)
+- ✅ **Business Layer**: 100% documented (BRS, workflows)
+- ✅ **Architecture Layer**: 100% documented (system overview, technical architecture)
+- ✅ **Reference Layer**: 100% documented (API, data models, components)
+- ✅ **Technical Layer**: 100% documented (implementation details, utilities)
 - ✅ **Operations Layer**: 100% documented (deployment, monitoring)
 
+### **Document Organization**
+- **Total Documents**: 25+ organized documents
+- **Folder Structure**: 4 main categories (architecture, guides, reference, technical)
+- **Cross-References**: Comprehensive linking between related documents
+- **Navigation**: Role-based quick access paths
+
 ### **Document Maintenance**
-- **Total Documents**: 11 core documents
-- **Last Full Review**: June 5, 2025
+- **Last Full Review**: June 6, 2025
 - **Update Frequency**: Living documents updated per change
 - **Review Cycle**: Quarterly comprehensive review
+- **Organization**: Completed full reorganization
 
 ---
 
-**📝 Last Updated**: June 5, 2025
-**📚 Total Documents**: 11 core documents
-**🏗️ Status**: Phase 4 Complete - Production Ready
-**📖 Coverage**: Complete end-to-end documentation
+**📝 Last Updated**: June 6, 2025
+**📚 Total Documents**: 20+ organized documents (cleaned up and reorganized)
+**🏗️ Status**: Phase 6 Complete - Location System Integrated
+**📖 Coverage**: Complete end-to-end documentation with organized structure
+**📁 Organization**: ✅ **COMPLETED** - All documentation properly categorized and cross-referenced
 
 ---
 
-*Comprehensive documentation for a modern, full-stack expense and overtime management system* 📋✨
+*Comprehensive, well-organized documentation for a modern, full-stack expense and overtime management system* 📋✨

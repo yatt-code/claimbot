@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Link from 'next/link';
 import { ColumnDef } from '@tanstack/react-table';
 import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
@@ -18,7 +18,7 @@ import AdminLayout from '@/components/AdminLayout';
 import { useRBAC } from '@/hooks/useRBAC';
 import { LocationTemplate } from '@/types/location';
 import useSWR from 'swr';
-import { useToast } from '@/components/ui/toast';
+import { toast } from 'react-hot-toast';
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
@@ -26,7 +26,6 @@ export default function LocationTemplatesPage() {
   const { isAdmin, isLoaded: rbacLoaded } = useRBAC();
   const { data: locationTemplates, error, isLoading } = useSWR<LocationTemplate[]>('/api/location-templates', fetcher);
   const [isDeleting, setIsDeleting] = useState(false);
-  const { addToast } = useToast();
 
   if (!rbacLoaded || isLoading) {
     return (
@@ -64,19 +63,12 @@ export default function LocationTemplatesPage() {
       if (!response.ok) {
         throw new Error('Failed to delete location template');
       }
-      addToast({
-        title: 'Success',
-        description: 'Location template deleted successfully.',
-      });
+      toast.success('Location template deleted successfully.');
       // Optionally revalidate SWR cache here if needed, or rely on a full page refresh
       // mutate('/api/location-templates');
       window.location.reload(); // Simple reload to reflect changes
-    } catch (err: any) {
-      addToast({
-        title: 'Error',
-        description: err.message || 'An error occurred during deletion.',
-        variant: 'destructive',
-      });
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'An error occurred during deletion.');
     } finally {
       setIsDeleting(false);
     }
