@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import FileUploader from "@/components/FileUploader";
 import { DatePicker } from "@/components/DatePicker";
 import LocationAutocomplete, { LocationData } from "@/components/LocationAutocomplete";
+import StaffLayout from "@/components/StaffLayout";
 import {
   Form,
   FormControl,
@@ -657,7 +658,7 @@ export default function SubmitExpensePage() {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <StaffLayout>
       <h1 className="text-2xl font-bold mb-4">📥 Expense Claim Form</h1>
 
       <div className="mb-4 flex space-x-2">
@@ -1074,6 +1075,6 @@ export default function SubmitExpensePage() {
           </div>
         </form>
       </Form>
-    </div>
+    </StaffLayout>
   );
 }

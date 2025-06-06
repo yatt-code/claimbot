@@ -1,9 +1,12 @@
 import { UserProfile } from "@clerk/nextjs";
+import StaffLayout from "@/components/StaffLayout";
 
 export default function Page() {
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <UserProfile />
-    </div>
+    <StaffLayout>
+      <div className="flex justify-center">
+        <UserProfile />
+      </div>
+    </StaffLayout>
   );
 }

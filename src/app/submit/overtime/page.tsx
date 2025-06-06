@@ -3,8 +3,9 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import FileUploader from "@/components/FileUploader";
-import { DatePicker } from "@/components/DatePicker"; // Import DatePicker
-import { TimePicker } from "@/components/TimePicker"; // Import TimePicker
+import { DatePicker } from "@/components/DatePicker";
+import { TimePicker } from "@/components/TimePicker";
+import StaffLayout from "@/components/StaffLayout";
 import {
   Form,
   FormControl,
@@ -107,9 +108,7 @@ export default function SubmitOvertimePage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">⏱️ Overtime Request</h1>
-
+    <StaffLayout>
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <FormField
@@ -182,6 +181,6 @@ export default function SubmitOvertimePage() {
           </div>
         </form>
       </Form>
-    </div>
+    </StaffLayout>
   );
 }

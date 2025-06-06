@@ -1,7 +1,8 @@
 "use client";
 
 import SubmissionTable from "@/components/SubmissionTable";
-import { useState, useEffect } from "react"; // Import useState and useEffect
+import StaffLayout from "@/components/StaffLayout";
+import { useState, useEffect } from "react";
 
 // Define the Submission type based on expected backend response
 interface Submission {
@@ -85,22 +86,42 @@ export default function MySubmissionsPage() {
 
 
   return (
-    <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-4">🗂️ My Submissions</h1>
-      {loading && <p>Loading submissions...</p>}
-      {error && <p className="text-red-500">Error: {error}</p>}
-      {!loading && !error && allSubmissions.length > 0 && (
-        <SubmissionTable submissions={allSubmissions.map(sub => ({
-          _id: sub._id,
-          date: new Date(sub.createdAt).toLocaleDateString(),
-          type: sub.type,
-          status: sub.status,
-          total: sub.type === "Expense" ? sub.totalAmount ?? 0 : sub.calculatedAmount ?? 0,
-        }))} />
-      )}
-      {!loading && !error && allSubmissions.length === 0 && (
-        <p>No submissions found.</p>
-      )}
-    </div>
+    <StaffLayout>
+      <div className="space-y-6">
+        {loading && (
+          <div className="flex items-center justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-2">Loading submissions...</span>
+          </div>
+        )}
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600">Error: {error}</p>
+          </div>
+        )}
+        
+        {!loading && !error && allSubmissions.length > 0 && (
+          <div className="bg-white rounded-lg shadow border">
+            <SubmissionTable submissions={allSubmissions.map(sub => ({
+              _id: sub._id,
+              date: new Date(sub.createdAt).toLocaleDateString(),
+              type: sub.type,
+              status: sub.status,
+              total: sub.type === "Expense" ? sub.totalAmount ?? 0 : sub.calculatedAmount ?? 0,
+            }))} />
+          </div>
+        )}
+        
+        {!loading && !error && allSubmissions.length === 0 && (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+            <p className="text-gray-500 mb-4">No submissions found yet.</p>
+            <p className="text-sm text-gray-400">
+              Start by submitting your first expense claim or overtime request!
+            </p>
+          </div>
+        )}
+      </div>
+    </StaffLayout>
   );
 }

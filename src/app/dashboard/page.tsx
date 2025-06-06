@@ -3,16 +3,9 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import SubmissionTable from "@/components/SubmissionTable";
-import { useUser, SignOutButton } from "@clerk/nextjs";
-import { useRBAC } from "@/hooks/useRBAC";
+import StaffLayout from "@/components/StaffLayout";
+import { useUser } from "@clerk/nextjs";
 import { useState, useEffect } from "react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 // Define the API response types
 interface ClaimResponse {
@@ -43,13 +36,9 @@ interface Submission {
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
-  const rbac = useRBAC();
   const [recentSubmissions, setRecentSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Check if user has admin or manager permissions
-  const hasAdminAccess = rbac.hasAnyRole(['manager', 'admin', 'superadmin']);
 
   useEffect(() => {
     const fetchSubmissions = async () => {
@@ -141,156 +130,106 @@ export default function DashboardPage() {
   const userName = user.firstName || user.fullName || "User";
 
   return (
-    <div className="container mx-auto py-4 px-4 md:py-8 md:px-6">
-      {/* Header with Profile */}
-      <div className="flex justify-between items-center mb-6">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold mb-1">
-            Hello, {userName} 👋
-          </h1>
-          <p className="text-gray-600">Today&apos;s Date: {currentDate}</p>
+    <StaffLayout>
+      <div className="space-y-6">
+        {/* Welcome Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold mb-1">
+              Hello, {userName} 👋
+            </h1>
+            <p className="text-gray-600">Today&apos;s Date: {currentDate}</p>
+          </div>
         </div>
-        
-        {/* User Profile Dropdown */}
-        <div className="flex items-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center space-x-3 h-auto p-2">
-                <div className="text-right hidden md:block">
-                  <p className="text-sm font-medium text-gray-900">{userName}</p>
-                  <p className="text-xs text-gray-500">{user.primaryEmailAddress?.emailAddress}</p>
-                </div>
-                
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-white text-sm font-medium">
-                    {userName.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            
-            <DropdownMenuContent align="end" className="w-56">
-              {/* User Info Header */}
-              <div className="px-2 py-1.5 text-sm">
-                <p className="font-medium text-gray-900">{userName}</p>
-                <p className="text-xs text-gray-500">{user.primaryEmailAddress?.emailAddress}</p>
-              </div>
-              
-              <DropdownMenuSeparator />
-              
-              {/* Profile Link */}
-              <DropdownMenuItem asChild>
-                <Link href="/auth/profile" className="cursor-pointer">
-                  👤 My Profile
-                </Link>
-              </DropdownMenuItem>
-              
-              {/* Admin Console (if user has access) */}
-              {hasAdminAccess && (
-                <DropdownMenuItem asChild>
-                  <Link href="/admin" className="cursor-pointer">
-                    🏗️ Admin Console
-                  </Link>
-                </DropdownMenuItem>
-              )}
-              
-              <DropdownMenuSeparator />
-              
-              {/* Sign Out */}
-              <DropdownMenuItem asChild>
-                <SignOutButton>
-                  <button className="w-full text-left cursor-pointer">
-                    🚪 Sign Out
-                  </button>
-                </SignOutButton>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+
+        {/* Quick Actions */}
+        <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4">
+          <Link href="/submit/expense">
+            <Button className="w-full md:w-auto bg-blue-600 hover:bg-blue-700">
+              + Submit Expense
+            </Button>
+          </Link>
+          <Link href="/submit/overtime">
+            <Button className="w-full md:w-auto bg-green-600 hover:bg-green-700">
+              + Submit Overtime
+            </Button>
+          </Link>
+          <Link href="/my-submissions">
+            <Button variant="outline" className="w-full md:w-auto">
+              📄 View All Submissions
+            </Button>
+          </Link>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <h3 className="text-sm font-medium text-gray-500">Pending Claims</h3>
+            <p className="text-2xl font-bold text-orange-600">
+              {recentSubmissions.filter(s => s.status === 'Pending').length}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <h3 className="text-sm font-medium text-gray-500">Approved This Month</h3>
+            <p className="text-2xl font-bold text-green-600">
+              {recentSubmissions.filter(s => s.status === 'Approved').length}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <h3 className="text-sm font-medium text-gray-500">Total Submitted</h3>
+            <p className="text-2xl font-bold text-blue-600">
+              {recentSubmissions.length}
+            </p>
+          </div>
+          <div className="bg-white p-4 rounded-lg shadow border">
+            <h3 className="text-sm font-medium text-gray-500">Draft Items</h3>
+            <p className="text-2xl font-bold text-gray-600">
+              {recentSubmissions.filter(s => s.status === 'Draft').length}
+            </p>
+          </div>
+        </div>
+
+        {/* Recent Submissions */}
+        <div className="space-y-4">
+          <h2 className="text-lg md:text-xl font-semibold">📄 My Recent Submissions</h2>
+          
+          {loading && (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2">Loading recent submissions...</span>
+            </div>
+          )}
+          
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-600">Error: {error}</p>
+            </div>
+          )}
+          
+          {!loading && !error && recentSubmissions.length > 0 && (
+            <div className="bg-white rounded-lg shadow border">
+              <SubmissionTable
+                submissions={recentSubmissions.map(sub => ({
+                  _id: sub._id,
+                  date: new Date(sub.createdAt).toLocaleDateString(),
+                  type: sub.type,
+                  status: sub.status,
+                  total: sub.type === "Expense" ? sub.totalAmount ?? 0 : sub.calculatedAmount ?? 0,
+                }))}
+              />
+            </div>
+          )}
+          
+          {!loading && !error && recentSubmissions.length === 0 && (
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
+              <p className="text-gray-500 mb-4">No submissions found yet.</p>
+              <p className="text-sm text-gray-400">
+                Start by submitting your first expense claim or overtime request!
+              </p>
+            </div>
+          )}
         </div>
       </div>
-
-      <div className="flex flex-col md:flex-row space-y-4 md:space-y-0 md:space-x-4 mb-8">
-        <Link href="/submit/expense">
-          <Button className="w-full md:w-auto bg-blue-600 hover:bg-blue-700">
-            + Submit Expense
-          </Button>
-        </Link>
-        <Link href="/submit/overtime">
-          <Button className="w-full md:w-auto bg-green-600 hover:bg-green-700">
-            + Submit Overtime
-          </Button>
-        </Link>
-        <Link href="/my-submissions">
-          <Button variant="outline" className="w-full md:w-auto">
-            📄 View All Submissions
-          </Button>
-        </Link>
-      </div>
-
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <h3 className="text-sm font-medium text-gray-500">Pending Claims</h3>
-          <p className="text-2xl font-bold text-orange-600">
-            {recentSubmissions.filter(s => s.status === 'Pending').length}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <h3 className="text-sm font-medium text-gray-500">Approved This Month</h3>
-          <p className="text-2xl font-bold text-green-600">
-            {recentSubmissions.filter(s => s.status === 'Approved').length}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <h3 className="text-sm font-medium text-gray-500">Total Submitted</h3>
-          <p className="text-2xl font-bold text-blue-600">
-            {recentSubmissions.length}
-          </p>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow border">
-          <h3 className="text-sm font-medium text-gray-500">Draft Items</h3>
-          <p className="text-2xl font-bold text-gray-600">
-            {recentSubmissions.filter(s => s.status === 'Draft').length}
-          </p>
-        </div>
-      </div>
-
-      <h2 className="text-lg md:text-xl font-semibold mb-4">📄 My Recent Submissions</h2>
-      
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <span className="ml-2">Loading recent submissions...</span>
-        </div>
-      )}
-      
-      {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-          <p className="text-red-600">Error: {error}</p>
-        </div>
-      )}
-      
-      {!loading && !error && recentSubmissions.length > 0 && (
-        <div className="bg-white rounded-lg shadow border">
-          <SubmissionTable 
-            submissions={recentSubmissions.map(sub => ({
-              _id: sub._id,
-              date: new Date(sub.createdAt).toLocaleDateString(),
-              type: sub.type,
-              status: sub.status,
-              total: sub.type === "Expense" ? sub.totalAmount ?? 0 : sub.calculatedAmount ?? 0,
-            }))} 
-          />
-        </div>
-      )}
-      
-      {!loading && !error && recentSubmissions.length === 0 && (
-        <div className="bg-gray-50 border border-gray-200 rounded-lg p-8 text-center">
-          <p className="text-gray-500 mb-4">No submissions found yet.</p>
-          <p className="text-sm text-gray-400">
-            Start by submitting your first expense claim or overtime request!
-          </p>
-        </div>
-      )}
-    </div>
+    </StaffLayout>
   );
 }
